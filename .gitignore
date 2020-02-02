@@ -1,0 +1,18 @@
+# Generals
+.DS_Store
+.idea
+
+# Deps
+vendor/**
+
+# PKI
+*.crt
+*.csr
+*.cer
+*.pem
+*.key
+!**/testdata/*.cer
+!**/testdata/*.pem
+
+# protobuf / RPC
+*.swagger.json
