@@ -10,14 +10,18 @@ do
 done
 echo "0" >> temp/go/build.txt
 
-# Build library and adjust custom path used
+## Build library and adjust custom path used
 cd temp/go || exit
-UPSTREAM_VERSION=`git log --pretty=format:'%H' -n1`
+UPSTREAM_VERSION=$(git log --pretty=format:'%H' -n1)
 python3 config64.py < build.txt
 find . -type f -name '*.go' -exec sed -i '' "s|github.com/miracl/core/go|go.bryk.io/miracl|g" {} +
 cp -Rv ./core ../../.
 
-# Final clean-up
+## Copy test files
+cp Test* ../../.
+cp Bench* ../../.
+
+## Final clean-up
 cd ../..
 sed -i '' '$d' main.go
 echo "const Version=\"${UPSTREAM_VERSION}\"" >> main.go

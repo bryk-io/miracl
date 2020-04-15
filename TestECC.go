@@ -34,15 +34,20 @@
 
 package main
 
-import (
-	"fmt"
+import "fmt"
 
-	"go.bryk.io/miracl/core"
-	"go.bryk.io/miracl/core/ED25519"
-	"go.bryk.io/miracl/core/GOLDILOCKS"
-	"go.bryk.io/miracl/core/NIST256"
-	"go.bryk.io/miracl/core/RSA2048"
-)
+import "go.bryk.io/miracl/core"
+import "go.bryk.io/miracl/core/ED25519"
+import "go.bryk.io/miracl/core/NIST256"
+import "go.bryk.io/miracl/core/GOLDILOCKS"
+import "go.bryk.io/miracl/core/RSA2048"
+
+func printBinary(array []byte) {
+	for i := 0; i < len(array); i++ {
+		fmt.Printf("%02x", array[i])
+	}
+	fmt.Printf("\n")
+}
 
 func ecdh_ED25519(rng *core.RAND) {
 	//	j:=0
@@ -533,4 +538,17 @@ func rsa_2048(rng *core.RAND) {
 		fmt.Printf("Signature is INVALID\n")
 	}
 
+}
+
+func main() {
+	rng := core.NewRAND()
+	var raw [100]byte
+	for i := 0; i < 100; i++ {
+		raw[i] = byte(i)
+	}
+	rng.Seed(100, raw[:])
+	ecdh_ED25519(rng)
+	ecdh_NIST256(rng)
+	ecdh_GOLDILOCKS(rng)
+	rsa_2048(rng)
 }

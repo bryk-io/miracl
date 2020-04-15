@@ -1204,14 +1204,14 @@ func ECP_hap2point(h *BIG) *ECP {
 }
 
 /* Constant time Map to Point */
-func ECP_map2point(h *BIG) *ECP {
+func ECP_map2point(h *FP) *ECP {
 	P := NewECP()
 
 	if CURVETYPE == MONTGOMERY {
 // Elligator 2
 			one:=NewFPint(1)
 			A:=NewFPint(CURVE_A)
-			t:=NewFPbig(h)
+			t:=NewFPcopy(h)
 
             t.sqr();
 
@@ -1241,28 +1241,51 @@ func ECP_map2point(h *BIG) *ECP {
 	} 
 	if CURVETYPE == EDWARDS {
 // Elligator 2 - map to Montgomery, place point, map back
-            t:=NewFPbig(h)
+            t:=NewFPcopy(h)
             one:=NewFPint(1)
             B:=NewFPbig(NewBIGints(CURVE_B))
-            A:=NewFPcopy(B)
+			var A *FP
+            K:=NewFP()
+			rfc:=0
             sgn:=t.sign()
-            if (CURVE_A==1) {
-                A.add(one)
-                B.sub(one)
-            } else {
-                A.sub(one)
-                B.add(one)
-            }
-            A.norm(); B.norm()
-            KB:=NewFPcopy(B);
 
-            A.div2()
-            B.div2()
-            B.div2()
-            B.sqr()
-            
+			if MODTYPE !=  GENERALISED_MERSENNE {
+				A=NewFPcopy(B)
+				
+				if (CURVE_A==1) {
+					A.add(one)
+					B.sub(one)
+				} else {
+					A.sub(one)
+					B.add(one)
+				}
+				A.norm(); B.norm()
+
+
+				A.div2()
+				B.div2()
+				B.div2()
+
+				K.copy(B);
+				K.neg()
+				K.inverse()
+
+				rfc=RIADZ
+				if rfc==1 { // RFC7748
+					A.mul(K)
+					K=K.sqrt(nil)
+					if K.sign()==1 {
+						K.neg()
+					}
+				} else {
+				 B.sqr()
+				}
+			} else {
+				rfc=1
+				A=NewFPint(156326)
+			}
+
             t.sqr()
-
             if PM1D2 == 2 {
                 t.add(t)
             } 
@@ -1285,15 +1308,23 @@ func ECP_map2point(h *BIG) *ECP {
             X1.norm()
             t.copy(X1); t.sqr(); w1:=NewFPcopy(t); w1.mul(X1)
             t.mul(A); w1.add(t)
-            t.copy(X1); t.mul(B)
-            w1.add(t)
+            if rfc==0 {
+                t.copy(X1); t.mul(B)
+                w1.add(t)
+            } else {
+                w1.add(X1)
+            }
             w1.norm()
 
             X2.norm()
             t.copy(X2); t.sqr(); w2:=NewFPcopy(t); w2.mul(X2)
             t.mul(A); w2.add(t)
-            t.copy(X2); t.mul(B)
-            w2.add(t)
+            if rfc==0 {
+                t.copy(X2); t.mul(B)
+                w2.add(t)
+            } else {
+                w2.add(X2)
+            }
             w2.norm()
 
             qres:=w2.qr(nil)
@@ -1301,24 +1332,49 @@ func ECP_map2point(h *BIG) *ECP {
             w1.cmove(w2,qres)
 
             Y:=w1.sqrt(nil)
-            t.copy(X1); t.add(t); t.add(t); t.norm()
 
-            w1.copy(t); w1.sub(KB); w1.norm()
-            w2.copy(t); w2.add(KB); w2.norm()
-            t.copy(w1); t.mul(Y)
-            t.inverse()
-
-            X1.mul(t)
-            X1.mul(w1)
-            Y.mul(t)
-            Y.mul(w2)
-
-            x:=X1.redc()
-
+			if rfc==0 {
+				X1.mul(K);
+				Y.mul(K);
+			}
             ne:=Y.sign()^sgn
             NY:=NewFPcopy(Y); NY.neg(); NY.norm()
             Y.cmove(NY,ne)
+			if MODTYPE ==  GENERALISED_MERSENNE {
+                t.copy(X1); t.sqr()
+                NY.copy(t); NY.add(one); NY.norm()
+                t.sub(one); t.norm()
+                w1.copy(t); w1.mul(Y)
+                w1.add(w1); w1.add(w1); w1.norm()
+                t.sqr()
+                Y.sqr(); Y.add(Y); Y.add(Y); Y.norm()
+                w2.copy(t); w2.add(Y); w2.norm()
+                w2.inverse()
+                w1.mul(w2)
 
+                w2.copy(Y); w2.sub(t); w2.norm()
+                w2.mul(X1)
+                t.mul(X1)
+                X1.copy(w1)
+                Y.div2()
+                w1.copy(Y); w1.mul(NY)
+                w1.rsub(t); w1.norm()
+                w1.inverse()
+                Y.copy(w2); Y.mul(w1)
+			} else {
+				w1.copy(X1); w1.add(one); w1.norm()
+				w2.copy(X1); w2.sub(one); w2.norm()
+				t.copy(w1); t.mul(Y)
+				t.inverse()
+				X1.mul(w1)
+				X1.mul(t)
+				if rfc==1 {
+					X1.mul(K)
+				}
+				Y.mul(w2)
+				Y.mul(t)
+			}
+            x:=X1.redc()
             y:=Y.redc()
             P.Copy(NewECPbigs(x,y))
 	}
@@ -1326,19 +1382,20 @@ func ECP_map2point(h *BIG) *ECP {
 	// swu method
             one:=NewFPint(1);
             B:=NewFPbig(NewBIGints(CURVE_B))
-            t:=NewFPbig(h)
+            t:=NewFPcopy(h)
             x:=NewBIG();
 			Y:=NewFP();
             sgn:=t.sign();
             if CURVE_A!=0 {
                 A:=NewFPint(CURVE_A)
 				t.sqr();
-				if (PM1D2 == 2) {
-					t.add(t)
-				} else {
-					t.neg()
-				}
-                t.norm()
+				//if (PM1D2 == 2) {
+				//	t.add(t)
+				//} else {
+				//	t.neg()
+				//}
+                //t.norm()
+				t.imul(RIADZ)
                 w:=NewFPcopy(t); w.add(one); w.norm()
                 w.mul(t)
                 A.mul(w)

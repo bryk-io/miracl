@@ -35,7 +35,7 @@
 /* FP4 elements are of the form a+ib, where i is sqrt(-1+sqrt(-1)) */
 
 package BLS48581
-
+import "go.bryk.io/miracl/core"
 //import "fmt"
 
 type FP8 struct {
@@ -83,6 +83,11 @@ func NewFP8fp(c *FP) *FP8 {
 	F := new(FP8)
 	F.a = NewFP4fp(c)
 	F.b = NewFP4()
+	return F
+}
+
+func NewFP8rand(rng *core.RAND) *FP8 {
+	F := NewFP8fp4s(NewFP4rand(rng),NewFP4rand(rng))
 	return F
 }
 
@@ -159,8 +164,26 @@ func (F *FP8) one() {
 
 /* Return sign */
 func (F *FP8) sign() int {
-	m := F.a.a.a.redc()
-	return m.parity() 
+	p1 := F.a.sign();
+	p2 := F.b.sign();
+	var u int
+	if BIG_ENDIAN_SIGN {
+		if F.b.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p2^=(p1^p2)&u;
+		return p2;
+	} else {
+		if F.a.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p1^=(p1^p2)&u;
+		return p1;
+	}
 }
 
 /* set this=-this */

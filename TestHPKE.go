@@ -34,14 +34,19 @@
 
 package main
 
-import (
-	"encoding/hex"
-	"fmt"
+import "fmt"
+import "encoding/hex"
 
-	"go.bryk.io/miracl/core"
-	"go.bryk.io/miracl/core/C25519"
-	"go.bryk.io/miracl/core/NIST521"
-)
+import "go.bryk.io/miracl/core"
+import "go.bryk.io/miracl/core/C25519"
+import "go.bryk.io/miracl/core/NIST521"
+
+func printBinary(array []byte) {
+	for i := 0; i < len(array); i++ {
+		fmt.Printf("%02x", array[i])
+	}
+	fmt.Printf("\n")
+}
 
 func hpke_C25519(rng *core.RAND) {
 	config_id:=0x2A
@@ -252,4 +257,18 @@ func hpke_NIST521(rng *core.RAND) {
 	fmt.Printf("Cipher= "); printBinary(CIPHER[:])
 	fmt.Printf("Tag= "); printBinary(TAG[:])
 
+}
+
+func main() {
+	rng := core.NewRAND()
+	var raw [100]byte
+	for i := 0; i < 100; i++ {
+		raw[i] = byte(i)
+	}
+	rng.Seed(100, raw[:])
+
+	fmt.Printf("\nTesting HPKE for curve C25519\n")
+	hpke_C25519(rng)
+	fmt.Printf("\nTesting HPKE for curve NIST521\n")
+	hpke_NIST521(rng)
 }

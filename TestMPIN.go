@@ -34,15 +34,21 @@
 
 package main
 
-import (
-	"fmt"
+import "fmt"
 
-	"go.bryk.io/miracl/core"
-	"go.bryk.io/miracl/core/BLS12383"
-	"go.bryk.io/miracl/core/BLS24479"
-	"go.bryk.io/miracl/core/BLS48556"
-	"go.bryk.io/miracl/core/BN254"
-)
+import "go.bryk.io/miracl/core"
+
+import "go.bryk.io/miracl/core/BN254"
+import "go.bryk.io/miracl/core/BLS12383"
+import "go.bryk.io/miracl/core/BLS24479"
+import "go.bryk.io/miracl/core/BLS48556"
+
+func printBinary(array []byte) {
+	for i := 0; i < len(array); i++ {
+		fmt.Printf("%02x", array[i])
+	}
+	fmt.Printf("\n")
+}
 
 /* Configure mode of operation */
 
@@ -898,4 +904,18 @@ func mpin_BLS48556(rng *core.RAND) {
 			printBinary(SK[:])
 		}
 	}
+}
+
+func main() {
+	rng := core.NewRAND()
+	var raw [100]byte
+	for i := 0; i < 100; i++ {
+		raw[i] = byte(i)
+	}
+	rng.Seed(100, raw[:])
+
+	mpin_BN254(rng)
+	mpin_BLS12383(rng)
+	mpin_BLS24479(rng)
+	mpin_BLS48556(rng)
 }

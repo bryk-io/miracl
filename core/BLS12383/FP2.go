@@ -35,7 +35,7 @@
 /* FP2 elements are of the form a+ib, where i is sqrt(-1) */
 
 package BLS12383
-
+import "go.bryk.io/miracl/core"
 //import "fmt"
 
 type FP2 struct {
@@ -97,6 +97,11 @@ func NewFP2big(c *BIG) *FP2 {
 	F := new(FP2)
 	F.a = NewFPbig(c)
 	F.b = NewFP()
+	return F
+}
+
+func NewFP2rand(rng *core.RAND) *FP2 {
+	F := NewFP2fps(NewFPrand(rng),NewFPrand(rng))
 	return F
 }
 
@@ -162,8 +167,26 @@ func (F *FP2) one() {
 }
 /* Return sign */
 func (F *FP2) sign() int {
-	m := F.a.redc()
-	return m.parity() 
+	p1 := F.a.sign();
+	p2 := F.b.sign();
+	var u int
+	if BIG_ENDIAN_SIGN {
+		if F.b.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p2^=(p1^p2)&u;
+		return p2;
+	} else {
+		if F.a.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p1^=(p1^p2)&u;
+		return p1;
+	}
 }
 
 /* negate this mod Modulus */

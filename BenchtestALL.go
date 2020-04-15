@@ -34,20 +34,24 @@
 
 package main
 
-import (
-	"fmt"
-	"time"
+import "fmt"
 
-	"go.bryk.io/miracl/core"
-	"go.bryk.io/miracl/core/BLS12383"
-	"go.bryk.io/miracl/core/BLS24479"
-	"go.bryk.io/miracl/core/BLS48556"
-	"go.bryk.io/miracl/core/BN254"
-	"go.bryk.io/miracl/core/ED25519"
-	"go.bryk.io/miracl/core/GOLDILOCKS"
-	"go.bryk.io/miracl/core/NIST256"
-	"go.bryk.io/miracl/core/RSA2048"
-)
+import "go.bryk.io/miracl/core"
+import "go.bryk.io/miracl/core/ED25519"
+import "go.bryk.io/miracl/core/NIST256"
+import "go.bryk.io/miracl/core/GOLDILOCKS"
+import "go.bryk.io/miracl/core/BN254"
+import "go.bryk.io/miracl/core/BLS12383"
+import "go.bryk.io/miracl/core/RSA2048"
+import "go.bryk.io/miracl/core/BLS24479"
+import "go.bryk.io/miracl/core/BLS48556"
+
+//import "core"
+//import "core/BN254"
+//import "core/ED25519"
+//import "core/RSA2048"
+
+import "time"
 
 const MIN_TIME int = 10
 const MIN_ITERS int = 10
@@ -81,14 +85,15 @@ func ED_25519(rng *core.RAND) {
 	fmt.Printf("Modulus size %d bits\n", ED25519.MODBITS)
 	fmt.Printf("%d bit build\n", ED25519.CHUNK)
 
-	var es *ED25519.BIG
+	var rw *ED25519.FP
 	var WP *ED25519.ECP
 	EG := ED25519.ECP_generator()
 	er := ED25519.NewBIGints(ED25519.CURVE_Order)
+	es := ED25519.Randtrunc(er, 16*ED25519.AESKEY, rng)
 
 	for i:=0;i<10;i++ {
-		es = ED25519.Randtrunc(er, 16*ED25519.AESKEY, rng)
-		WP = ED25519.ECP_map2point(es)
+		rw = ED25519.NewFPrand(rng)
+		WP = ED25519.ECP_map2point(rw)
 		WP.Cfp();
 		if (WP.Is_infinity()) {
 			fmt.Printf("HASHING FAILURE - P=O\n");
@@ -145,15 +150,16 @@ func NIST_256(rng *core.RAND) {
 	fmt.Printf("Modulus size %d bits\n", NIST256.MODBITS)
 	fmt.Printf("%d bit build\n", NIST256.CHUNK)
 
-	var es *NIST256.BIG
+	var rw *NIST256.FP
 	var WP *NIST256.ECP
 
 	EG := NIST256.ECP_generator()
 	er := NIST256.NewBIGints(NIST256.CURVE_Order)
-	
+	es := NIST256.Randtrunc(er, 16*NIST256.AESKEY, rng)
+
 	for i:=0;i<10;i++ {
-		es = NIST256.Randtrunc(er, 16*NIST256.AESKEY, rng)
-		WP=NIST256.ECP_map2point(es)
+		rw = NIST256.NewFPrand(rng)
+		WP=NIST256.ECP_map2point(rw)
 		WP.Cfp();
 		if (WP.Is_infinity()) {
 			fmt.Printf("HASHING FAILURE - P=O\n");
@@ -210,15 +216,15 @@ func GOLDI_LOCKS(rng *core.RAND) {
 	fmt.Printf("Modulus size %d bits\n", GOLDILOCKS.MODBITS)
 	fmt.Printf("%d bit build\n", GOLDILOCKS.CHUNK)
 
-	var es *GOLDILOCKS.BIG
+	var rw *GOLDILOCKS.FP
 	var WP *GOLDILOCKS.ECP
 
 	EG := GOLDILOCKS.ECP_generator()
 	er := GOLDILOCKS.NewBIGints(GOLDILOCKS.CURVE_Order)
-	
+	es := GOLDILOCKS.Randtrunc(er, 16*GOLDILOCKS.AESKEY, rng)
 	for i:=0;i<10;i++ {
-		es = GOLDILOCKS.Randtrunc(er, 16*GOLDILOCKS.AESKEY, rng)
-		WP=GOLDILOCKS.ECP_map2point(es)
+		rw = GOLDILOCKS.NewFPrand(rng)
+		WP=GOLDILOCKS.ECP_map2point(rw)
 		WP.Cfp();
 
 		if (WP.Is_infinity()) {
@@ -265,7 +271,8 @@ func BN_254(rng *core.RAND) {
 	r := BN254.NewBIGints(BN254.CURVE_Order)
 	s := BN254.Randtrunc(r, 16*BN254.AESKEY, rng)
 
-	P:=BN254.ECP_map2point(s)
+	rw := BN254.NewFPrand(rng)
+	P:=BN254.ECP_map2point(rw)
 	P.Cfp();
     if (P.Is_infinity()) {
         fmt.Printf("HASHING FAILURE - P=O\n");
@@ -293,7 +300,8 @@ func BN_254(rng *core.RAND) {
 
 	Q := BN254.ECP2_generator()
 
-    W := BN254.ECP2_map2point(s)
+	rz := BN254.NewFP2rand(rng)
+    W := BN254.ECP2_map2point(rz)
     W.Cfp()
     if W.Is_infinity() {
         fmt.Printf("HASHING FAILURE - P=O\n")
@@ -448,7 +456,8 @@ func BLS_383(rng *core.RAND) {
 	r := BLS12383.NewBIGints(BLS12383.CURVE_Order)
 	s := BLS12383.Randtrunc(r, 16*BLS12383.AESKEY, rng)
 
-	P:=BLS12383.ECP_map2point(s)
+	rw := BLS12383.NewFPrand(rng)
+	P:=BLS12383.ECP_map2point(rw)
 	P.Cfp();
     if (P.Is_infinity()) {
         fmt.Printf("HASHING FAILURE - P=O\n");
@@ -476,7 +485,8 @@ func BLS_383(rng *core.RAND) {
 
 	Q := BLS12383.ECP2_generator()
 
-    W := BLS12383.ECP2_map2point(s)
+	rz := BLS12383.NewFP2rand(rng)
+    W := BLS12383.ECP2_map2point(rz)
     W.Cfp()
     if W.Is_infinity() {
         fmt.Printf("HASHING FAILURE - P=O\n")
@@ -631,7 +641,8 @@ func BLS_24(rng *core.RAND) {
 	r := BLS24479.NewBIGints(BLS24479.CURVE_Order)
 	s := BLS24479.Randtrunc(r, 16*BLS24479.AESKEY, rng)
 
-	P:=BLS24479.ECP_map2point(s)
+	rw := BLS24479.NewFPrand(rng)
+	P:=BLS24479.ECP_map2point(rw)
 	P.Cfp()
     if (P.Is_infinity()) {
         fmt.Printf("HASHING FAILURE - P=O\n");
@@ -659,8 +670,8 @@ func BLS_24(rng *core.RAND) {
 
 	Q := BLS24479.ECP4_generator()
 
-
-    W := BLS24479.ECP4_map2point(s)
+	rz := BLS24479.NewFP4rand(rng)
+    W := BLS24479.ECP4_map2point(rz)
     W.Cfp()
     if W.Is_infinity() {
         fmt.Printf("HASHING FAILURE - P=O\n")
@@ -815,7 +826,8 @@ func BLS_48(rng *core.RAND) {
 	r := BLS48556.NewBIGints(BLS48556.CURVE_Order)
 	s := BLS48556.Randtrunc(r, 16*BLS48556.AESKEY, rng)
 
-	P:=BLS48556.ECP_map2point(s)
+	rw := BLS48556.NewFPrand(rng)
+	P:=BLS48556.ECP_map2point(rw)
 	P.Cfp()
     if (P.Is_infinity()) {
         fmt.Printf("HASHING FAILURE - P=O\n");
@@ -843,7 +855,8 @@ func BLS_48(rng *core.RAND) {
 
 	Q := BLS48556.ECP8_generator()
 
-    W := BLS48556.ECP8_map2point(s)
+	rz := BLS48556.NewFP8rand(rng)
+    W := BLS48556.ECP8_map2point(rz)
     W.Cfp()
     if W.Is_infinity() {
         fmt.Printf("HASHING FAILURE - P=O\n")
@@ -1040,4 +1053,27 @@ func RSA_2048(rng *core.RAND) {
 	}
 
 	fmt.Printf("All tests pass\n")
+}
+
+func main() {
+	var RAW [100]byte
+
+	rng := core.NewRAND()
+
+	rng.Clean()
+	for i := 0; i < 100; i++ {
+		RAW[i] = byte(i)
+	}
+
+	rng.Seed(100, RAW[:])
+
+	ED_25519(rng)
+	NIST_256(rng)
+	GOLDI_LOCKS(rng)
+	BN_254(rng)
+	BLS_383(rng)
+	BLS_24(rng)
+	BLS_48(rng)
+	RSA_2048(rng)
+
 }

@@ -35,7 +35,7 @@
 /* FP4 elements are of the form a+ib, where i is sqrt(-1+sqrt(-1)) */
 
 package BN254CX
-
+import "go.bryk.io/miracl/core"
 //import "fmt"
 
 type FP4 struct {
@@ -83,6 +83,11 @@ func NewFP4fp(c *FP) *FP4 {
 	F := new(FP4)
 	F.a = NewFP2fp(c)
 	F.b = NewFP2()
+	return F
+}
+
+func NewFP4rand(rng *core.RAND) *FP4 {
+	F := NewFP4fp2s(NewFP2rand(rng),NewFP2rand(rng))
 	return F
 }
 
@@ -159,8 +164,26 @@ func (F *FP4) one() {
 
 /* Return sign */
 func (F *FP4) sign() int {
-	m := F.a.a.redc()
-	return m.parity() 
+	p1 := F.a.sign();
+	p2 := F.b.sign();
+	var u int
+	if BIG_ENDIAN_SIGN {
+		if F.b.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p2^=(p1^p2)&u;
+		return p2;
+	} else {
+		if F.a.iszilch() {
+			u=1;
+		} else {
+			u=0;
+		}
+		p1^=(p1^p2)&u;
+		return p1;
+	}
 }
 
 /* set this=-this */

@@ -23,38 +23,62 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   You can be released from the requirements of the license by purchasing     
+   You can be released from the requirements of the license by purchasing
    a commercial license. Buying such a license is mandatory as soon as you
    develop commercial activities involving the MIRACL Core Crypto SDK
    without disclosing the source code of your own applications, or shipping
-   the MIRACL Core Crypto SDK with a closed source product.     
+   the MIRACL Core Crypto SDK with a closed source product.
 */
 
+/* test driver and function exerciser for NewHope Simple Functions */
+// See https://eprint.iacr.org/2016/1157 (Alkim, Ducas, Popplemann and Schwabe)
 
-package SECP160R1
+package main
 
-// Modulus types
-const NOT_SPECIAL int = 0
-const PSEUDO_MERSENNE int = 1
-const MONTGOMERY_FRIENDLY int = 2
-const GENERALISED_MERSENNE int = 3
+import "fmt"
 
-const NEGATOWER int = 0
-const POSITOWER int = 1
+import "go.bryk.io/miracl/core"
 
-// Modulus details
-const MODBITS uint = 160 /* Number of bits in Modulus */
-const PM1D2 uint = 1  /* Modulus mod 8 */
-const RIADZ int = 3   /* hash-to-point Z */
-const MODTYPE int = NOT_SPECIAL //NOT_SPECIAL
-const QNRI int = 0    // Fp2 QNR
-const TOWER int = NEGATOWER   // Tower type
-const FEXCESS int32=((int32(1)<<8)-1)
+//import "core"
 
-// Modulus Masks
-const OMASK Chunk = ((Chunk(-1)) << (MODBITS % BASEBITS))
-const TBITS uint = MODBITS % BASEBITS // Number of active bits in top word
-const TMASK Chunk = (Chunk(1) << TBITS) - 1
+func main() {
 
-const BIG_ENDIAN_SIGN bool = false;
+	fmt.Printf("\nTesting New Hope Key Exchange\n")
 
+	srng := core.NewRAND()
+	var sraw [100]byte
+	for i := 0; i < 100; i++ {
+		sraw[i] = byte(i + 1)
+	}
+	srng.Seed(100, sraw[:])
+
+	crng := core.NewRAND()
+	var craw [100]byte
+	for i := 0; i < 100; i++ {
+		craw[i] = byte(i + 2)
+	}
+	crng.Seed(100, craw[:])
+
+	var S [1792]byte
+
+	var SB [1824]byte
+	core.NHS_SERVER_1(srng, SB[:], S[:])
+	var UC [2176]byte
+	var KEYB [32]byte
+	core.NHS_CLIENT(crng, SB[:], UC[:], KEYB[:])
+
+	fmt.Printf("Bob's Key= ")
+	for i := 0; i < 32; i++ {
+		fmt.Printf("%02x", KEYB[i])
+	}
+	fmt.Printf("\n")
+	var KEYA [32]byte
+	core.NHS_SERVER_2(S[:], UC[:], KEYA[:])
+
+	fmt.Printf("Alice Key= ")
+	for i := 0; i < 32; i++ {
+		fmt.Printf("%02x", KEYA[i])
+	}
+	fmt.Printf("\n")
+
+}
