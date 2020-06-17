@@ -1,34 +1,21 @@
 /*
-   Copyright (C) 2019 MIRACL UK Ltd.
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-     https://www.gnu.org/licenses/agpl-3.0.en.html
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-   You can be released from the requirements of the license by purchasing
-   a commercial license. Buying such a license is mandatory as soon as you
-   develop commercial activities involving the MIRACL Core Crypto SDK
-   without disclosing the source code of your own applications, or shipping
-   the MIRACL Core Crypto SDK with a closed source product.
-*/
+ * Copyright (c) 2012-2020 MIRACL UK Ltd.
+ *
+ * This file is part of MIRACL Core
+ * (see https://github.com/miracl/core).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package NUMS256E
 //import "fmt"
@@ -968,7 +955,6 @@ func (E *ECP) pinmul(e int32, bts int32) *ECP {
 			R0.cswap(R1, b)
 		}
 		P.Copy(R0)
-		P.Affine()
 		return P
 	}
 }
@@ -989,7 +975,6 @@ func (E *ECP) mul(e *BIG) *ECP {
 		R1.Copy(E)
 		R1.dbl()
 		D.Copy(E)
-		D.Affine()
 		nb := e.nbits()
 		for i := nb - 2; i >= 0; i-- {
 			b := int(e.bit(i))
@@ -1058,7 +1043,6 @@ func (E *ECP) mul(e *BIG) *ECP {
 		}
 		P.Sub(C) /* apply correction */
 	}
-	P.Affine()
 	return P
 }
 
@@ -1158,7 +1142,6 @@ func (E *ECP) Mul2(e *BIG, Q *ECP, f *BIG) *ECP {
 		S.Add(T)
 	}
 	S.Sub(C) /* apply correction */
-	S.Affine()
 	return S
 }
 
@@ -1217,7 +1200,7 @@ func ECP_map2point(h *FP) *ECP {
 
             if PM1D2 == 2 {
                 t.add(t)
-            } 
+            }
             if PM1D2 == 1 {
                 t.neg();
             }
@@ -1238,7 +1221,7 @@ func ECP_map2point(h *FP) *ECP {
 
             a:=X1.redc()
             P.Copy(NewECPbig(a))
-	} 
+	}
 	if CURVETYPE == EDWARDS {
 // Elligator 2 - map to Montgomery, place point, map back
             t:=NewFPcopy(h)
@@ -1247,11 +1230,11 @@ func ECP_map2point(h *FP) *ECP {
 			var A *FP
             K:=NewFP()
 			rfc:=0
-            sgn:=t.sign()
+            //sgn:=t.sign()
 
 			if MODTYPE !=  GENERALISED_MERSENNE {
 				A=NewFPcopy(B)
-				
+
 				if (CURVE_A==1) {
 					A.add(one)
 					B.sub(one)
@@ -1274,9 +1257,6 @@ func ECP_map2point(h *FP) *ECP {
 				if rfc==1 { // RFC7748
 					A.mul(K)
 					K=K.sqrt(nil)
-					if K.sign()==1 {
-						K.neg()
-					}
 				} else {
 				 B.sqr()
 				}
@@ -1288,7 +1268,7 @@ func ECP_map2point(h *FP) *ECP {
             t.sqr()
             if PM1D2 == 2 {
                 t.add(t)
-            } 
+            }
             if PM1D2 == 1 {
                 t.neg();
             }
@@ -1332,14 +1312,16 @@ func ECP_map2point(h *FP) *ECP {
             w1.cmove(w2,qres)
 
             Y:=w1.sqrt(nil)
+            NY:=NewFPcopy(Y); NY.neg(); NY.norm()
+            Y.cmove(NY,1-qres)
 
 			if rfc==0 {
 				X1.mul(K);
 				Y.mul(K);
 			}
-            ne:=Y.sign()^sgn
-            NY:=NewFPcopy(Y); NY.neg(); NY.norm()
-            Y.cmove(NY,ne)
+//            ne:=Y.sign()^sgn
+//            NY:=NewFPcopy(Y); NY.neg(); NY.norm()
+//            Y.cmove(NY,ne)
 			if MODTYPE ==  GENERALISED_MERSENNE {
                 t.copy(X1); t.sqr()
                 NY.copy(t); NY.add(one); NY.norm()
@@ -1385,6 +1367,7 @@ func ECP_map2point(h *FP) *ECP {
             t:=NewFPcopy(h)
             x:=NewBIG();
 			Y:=NewFP();
+			NY:=NewFP();
             sgn:=t.sign();
             if CURVE_A!=0 {
                 A:=NewFPint(CURVE_A)
@@ -1411,6 +1394,41 @@ func ECP_map2point(h *FP) *ECP {
                 Y.copy(rhs.sqrt(nil))
                 x.copy(X2.redc())
             } else {
+// Shallue and van de Woestijne
+                Z:=RIADZ
+                X1:=NewFPint(Z)
+                X3:=NewFPcopy(X1)
+                A:=RHS(X1)
+                t.sqr()
+                Y.copy(A); Y.mul(t)
+                t.copy(one); t.add(Y); t.norm()
+                Y.rsub(one); Y.norm()
+                NY.copy(t); NY.mul(Y); NY.inverse()
+                A.neg(); A.norm()
+                w:=NewFPcopy(A); w.imul(3); w.copy(w.sqrt(nil))
+                w.imul(Z)
+                w.mul(h); w.mul(Y); w.mul(NY)
+
+                X1.neg(); X1.norm(); X1.div2()
+                X2:=NewFPcopy(X1)
+                X1.sub(w); X1.norm()
+                X2.add(w); X2.norm()
+                A.add(A); A.add(A); A.norm()
+                t.sqr(); t.mul(NY); t.sqr()
+                A.mul(t)
+                t.copy(NewFPint(Z*Z*3))
+                t.inverse()
+                A.mul(t)
+                X3.add(A); X3.norm()
+
+                rhs:=RHS(X2)
+                X3.cmove(X2,rhs.qr(nil))
+                rhs.copy(RHS(X1))
+                X3.cmove(X1,rhs.qr(nil))
+                rhs.copy(RHS(X3))
+                Y.copy(rhs.sqrt(nil))
+                x.copy(X3.redc())
+/*
                 A:=NewFPint(-3)
                 w:=A.sqrt(nil)
                 j:=NewFPcopy(w); j.sub(one); j.norm(); j.div2()
@@ -1430,14 +1448,14 @@ func ECP_map2point(h *FP) *ECP {
                 X1.cmove(X3,rhs.qr(nil))
                 rhs.copy(RHS(X1))
                 Y.copy(rhs.sqrt(nil))
-                x.copy(X1.redc())
+                x.copy(X1.redc()) */
             }
             ne:=Y.sign()^sgn
-            NY:=NewFPcopy(Y); NY.neg(); NY.norm()
+            NY.copy(Y); NY.neg(); NY.norm()
             Y.cmove(NY,ne)
 
             y:=Y.redc()
-            P.Copy(NewECPbigs(x,y))            
+            P.Copy(NewECPbigs(x,y))
 	}
 	return P
 }
@@ -1445,7 +1463,7 @@ func ECP_map2point(h *FP) *ECP {
 func ECP_mapit(h []byte) *ECP {
 	q := NewBIGints(Modulus)
 	dx:= DBIG_fromBytes(h[:])
-	x:= dx.mod(q)
+	x:= dx.Mod(q)
 
 	P:= ECP_hap2point(x)
 	P.Cfp()

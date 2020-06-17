@@ -1,34 +1,21 @@
 /*
-   Copyright (C) 2019 MIRACL UK Ltd.
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-     https://www.gnu.org/licenses/agpl-3.0.en.html
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-   You can be released from the requirements of the license by purchasing
-   a commercial license. Buying such a license is mandatory as soon as you
-   develop commercial activities involving the MIRACL Core Crypto SDK
-   without disclosing the source code of your own applications, or shipping
-   the MIRACL Core Crypto SDK with a closed source product.
-*/
+ * Copyright (c) 2012-2020 MIRACL UK Ltd.
+ *
+ * This file is part of MIRACL Core
+ * (see https://github.com/miracl/core).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* core BIG number class */
 
@@ -39,19 +26,6 @@ import "math/bits"
 import "go.bryk.io/miracl/core"
 
 //import "fmt"
-//import "os"
-
-//const MODBYTES uint = @NB@
-//const BASEBITS uint = @BASE@
-
-//const NLEN int = int((1 + ((8*MODBYTES - 1) / BASEBITS)))
-//const DNLEN int = 2 * NLEN
-//const BMASK Chunk = ((Chunk(1) << BASEBITS) - 1)
-//const HBITS uint = (BASEBITS / 2)
-//const HMASK Chunk = ((Chunk(1) << HBITS) - 1)
-//const NEXCESS int = (1 << (uint(CHUNK) - BASEBITS - 1))
-
-//const BIGBITS int = int(MODBYTES * 8)
 
 type BIG struct {
 	w [NLEN]Chunk
@@ -150,27 +124,6 @@ func muladd(a Chunk, b Chunk, c Chunk, r Chunk) (Chunk, Chunk) {
 	bot &= BMASK
 	top+=carry
 	return top, bot
-
-/*
-	x0 := a & HMASK
-	x1 := (a >> HBITS)
-	y0 := b & HMASK
-	y1 := (b >> HBITS)
-	botx := x0 * y0
-	topx := x1 * y1
-	mid := x0*y1 + x1*y0
-	x0 = mid & HMASK
-	x1 = (mid >> HBITS)
-	botx += x0 << HBITS
-	botx += c
-	botx += r
-	topx += x1
-	carryx := botx >> BASEBITS
-	botx &= BMASK
-	topx += carryx
-
-	return topx, botx  
-*/
 
 }
 
@@ -377,6 +330,10 @@ func (r *BIG) nbits() int {
 		bts++
 	}
 	return bts
+}
+
+func (r *BIG) Nbits() int {
+	return r.nbits()
 }
 
 /* Convert to Hex String */
@@ -737,7 +694,7 @@ func Randomnum(q *BIG, rng *core.RAND) *BIG {
 		j++
 		j &= 7
 	}
-	m := d.mod(q)
+	m := d.Mod(q)
 	return m
 }
 
@@ -756,7 +713,7 @@ func Modmul(a1, b1, m *BIG) *BIG {
 	a.Mod(m)
 	b.Mod(m)
 	d := mul(a, b)
-	return d.mod(m)
+	return d.Mod(m)
 }
 
 /* return a^2 mod m */
@@ -764,7 +721,7 @@ func Modsqr(a1, m *BIG) *BIG {
 	a := NewBIGcopy(a1)
 	a.Mod(m)
 	d := sqr(a)
-	return d.mod(m)
+	return d.Mod(m)
 }
 
 /* return -a mod m */
@@ -836,9 +793,7 @@ func (r *BIG) Invmodp(p *BIG) {
 	if r.iszilch() {
 		return
 	}
-
 	u := NewBIGcopy(r)
-
 	v := NewBIGcopy(p)
 	x1 := NewBIGint(1)
 	x2 := NewBIGint(0)
@@ -847,49 +802,40 @@ func (r *BIG) Invmodp(p *BIG) {
 	for Comp(u, one) != 0 && Comp(v, one) != 0 {
 		for u.parity() == 0 {
 			u.fshr(1)
-			if x1.parity() != 0 {
-				x1.add(p)
-				x1.norm()
-			}
+			t.copy(x1)
+			t.add(p)
+			x1.cmove(t,x1.parity())
+			x1.norm()
 			x1.fshr(1)
 		}
 		for v.parity() == 0 {
 			v.fshr(1)
-			if x2.parity() != 0 {
-				x2.add(p)
-				x2.norm()
-			}
+			t.copy(x2)
+			t.add(p)
+			x2.cmove(t,x2.parity())
+			x2.norm()
 			x2.fshr(1)
 		}
 		if Comp(u, v) >= 0 {
 			u.sub(v)
 			u.norm()
-			if Comp(x1, x2) >= 0 {
-				x1.sub(x2)
-			} else {
-				t.copy(p)
-				t.sub(x2)
-				x1.add(t)
-			}
+			t.copy(x1)
+			t.add(p)
+			x1.cmove(t,(Comp(x1,x2)>>1)&1)
+			x1.sub(x2)
 			x1.norm()
 		} else {
 			v.sub(u)
 			v.norm()
-			if Comp(x2, x1) >= 0 {
-				x2.sub(x1)
-			} else {
-				t.copy(p)
-				t.sub(x1)
-				x2.add(t)
-			}
+			t.copy(x2)
+			t.add(p)
+			x2.cmove(t,(Comp(x2,x1)>>1)&1)
+			x2.sub(x1)
 			x2.norm()
 		}
 	}
-	if Comp(u, one) == 0 {
-		r.copy(x1)
-	} else {
-		r.copy(x2)
-	}
+	r.copy(x1)
+	r.cmove(x2,Comp(u,one)&1)
 }
 
 /* return this^e mod m */
