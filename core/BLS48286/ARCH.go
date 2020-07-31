@@ -19,7 +19,7 @@
 
 /* core BIG number class */
 
-package RSA4096
+package BLS48286
 
 type Chunk int64
 

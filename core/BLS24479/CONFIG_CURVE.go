@@ -27,7 +27,9 @@ const MONTGOMERY int = 2
 // Pairing Friendly?
 const NOT int = 0
 const BN int = 1
-const BLS int = 2
+const BLS12 int = 2
+const BLS24 int = 3
+const BLS48 int = 4
 
 // Pairing Twist type
 const D_TYPE int = 0
@@ -48,7 +50,8 @@ const NEGATIVEX int = 1
 // Curve type
 
 const CURVETYPE int = WEIERSTRASS
-const CURVE_PAIRING_TYPE int = BLS
+const CURVE_A int = 0
+const CURVE_PAIRING_TYPE int = BLS24
 
 // Pairings only
 

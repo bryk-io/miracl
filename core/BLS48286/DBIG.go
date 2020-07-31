@@ -19,7 +19,7 @@
 
 /* MiotCL double length DBIG number class */
 
-package RSA4096
+package BLS48286
 
 import "strconv"
 

@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: *
 .DEFAULT_GOAL:=help
 
 ## help: Prints this help message
