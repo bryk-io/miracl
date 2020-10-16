@@ -221,6 +221,25 @@ func (F *FP) iszilch() bool {
 	return W.x.iszilch()
 }
 
+func (F *FP) islarger() int {
+    if F.iszilch() {
+		return 0;
+	}
+	sx:= NewBIGints(Modulus)
+    fx:=F.redc();
+    sx.sub(fx); sx.norm()
+    return Comp(fx,sx)
+}
+
+func (F *FP) ToBytes(b []byte) {
+	F.redc().ToBytes(b)
+}
+
+func FP_fromBytes(b []byte) *FP {
+	t:=FromBytes(b)
+	return NewFPbig(t)
+}
+
 func (F *FP) isunity() bool {
 	W:=NewFPcopy(F)
 	W.reduce()
@@ -680,6 +699,8 @@ func (F *FP) invsqrt(i *FP,s *FP) int {
 	return qr
 }
 
+// Two for the price of one  - See Hamburg https://eprint.iacr.org/2012/309.pdf
+// Calculate inverse of i and square root of s, return QR
 func FP_tpo(i *FP,s *FP) int {
 	w:=NewFPcopy(s)
 	t:=NewFPcopy(i)

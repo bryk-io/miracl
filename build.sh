@@ -4,7 +4,7 @@ rm -rf core
 
 # Clone fork repository and setup build contents
 git clone https://github.com/bryk-io/miracl-core.git temp
-for i in {1..39}
+for i in {1..42}
 do
    echo "$i" >> temp/go/build.txt
 done

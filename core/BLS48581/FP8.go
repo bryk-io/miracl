@@ -103,6 +103,46 @@ func (F *FP8) iszilch() bool {
 	return F.a.iszilch() && F.b.iszilch()
 }
 
+
+func (F *FP8) islarger() int {
+    if F.iszilch() {
+		return 0;
+	}
+	cmp:=F.b.islarger()
+	if cmp!=0 {
+		return cmp
+	}
+	return F.a.islarger()
+}
+
+func (F *FP8) ToBytes(bf []byte) {
+	var t [4*int(MODBYTES)]byte
+	MB := 4*int(MODBYTES)
+	F.b.ToBytes(t[:]);
+	for i:=0;i<MB;i++ {
+		bf[i]=t[i];
+	}
+	F.a.ToBytes(t[:]);
+	for i:=0;i<MB;i++ {
+		bf[i+MB]=t[i];
+	}
+}
+
+func FP8_fromBytes(bf []byte) *FP8 {
+	var t [4*int(MODBYTES)]byte
+	MB := 4*int(MODBYTES)
+	for i:=0;i<MB;i++ {
+        t[i]=bf[i];
+	}
+    tb:=FP4_fromBytes(t[:])
+	for i:=0;i<MB;i++ {
+        t[i]=bf[i+MB]
+	}
+    ta:=FP4_fromBytes(t[:])
+	return NewFP8fp4s(ta,tb)
+}
+
+
 /* Conditional move */
 func (F *FP8) cmove(g *FP8, d int) {
 	F.a.cmove(g.a, d)
@@ -323,7 +363,7 @@ func (F *FP8) toString() string {
 }
 
 /* this=1/this */
-func (F *FP8) inverse() {
+func (F *FP8) inverse(h *FP) {
 	t1 := NewFP4copy(F.a)
 	t2 := NewFP4copy(F.b)
 
@@ -334,7 +374,7 @@ func (F *FP8) inverse() {
 	t1.sub(t2)
 	t1.norm()
 
-	t1.inverse()
+	t1.inverse(h)
 
 	F.a.mul(t1)
 	t1.neg()
@@ -665,17 +705,19 @@ func (F *FP8) pow(b *BIG) {
 	F.copy(r);
 }
 */
-/* Test for Quadratic Residue */
-func (F *FP8) qr() int {
+
+/* */
+// Test for Quadratic Residue 
+func (F *FP8) qr(h *FP) int {
 	c := NewFP8copy(F)
 	c.conj()
 	c.mul(F)
-	return c.a.qr()
+	return c.a.qr(h)
 }
 
 
-/* sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) */
-func (F *FP8) sqrt()  {
+// sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) 
+func (F *FP8) sqrt(h *FP)  {
 	if F.iszilch() {
 		return 
 	}
@@ -684,6 +726,7 @@ func (F *FP8) sqrt()  {
 	b := NewFP4()
 	s := NewFP4copy(F.b)
 	t := NewFP4copy(F.a)
+	hint := NewFP()
 
 	s.sqr()
 	a.sqr()
@@ -693,7 +736,7 @@ func (F *FP8) sqrt()  {
 
 	s.copy(a); s.norm()
 
-	s.sqrt()
+	s.sqrt(h)
 	a.copy(t)
 	b.copy(t)
 
@@ -701,24 +744,30 @@ func (F *FP8) sqrt()  {
 	a.norm()
 	a.div2()
 
-	b.sub(s)
-	b.norm()
-	b.div2()
+    b.copy(F.b); b.div2()
+    qr:=a.qr(hint)
 
-	a.cmove(b,b.qr())
+// tweak hint - multiply old hint by Norm(1/Beta)^e where Beta is irreducible polynomial
+    s.copy(a)
+	twk:=NewFPbig(NewBIGints(TWK))
+    twk.mul(hint)
+    s.div_i(); s.norm()
 
-	a.sqrt()
-	t.copy(F.b)
-	s.copy(a)
-	s.add(a); s.norm()
-	s.inverse()
+    a.cmove(s,1-qr)
+    hint.cmove(twk,1-qr)
 
-	t.mul(s)
-	F.a.copy(a)
-	F.b.copy(t)
+    F.a.copy(a); F.a.sqrt(hint)
+    s.copy(a); s.inverse(hint)
+    s.mul(F.a)
+    F.b.copy(s); F.b.mul(b)
+    t.copy(F.a);
+
+    F.a.cmove(F.b,1-qr);
+    F.b.cmove(t,1-qr);
 
 	sgn:=F.sign()
 	nr:=NewFP8copy(F)
 	nr.neg(); nr.norm()
 	F.cmove(nr,sgn)
 }
+/* */

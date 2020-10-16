@@ -125,7 +125,7 @@ func (E *ECP8) Affine() {
 		E.y.reduce()
 		return
 	}
-	E.z.inverse()
+	E.z.inverse(nil)
 
 	E.x.mul(E.z)
 	E.x.reduce()
@@ -167,203 +167,100 @@ func (E *ECP8) getz() *FP8 {
 
 /* convert to byte array */
 func (E *ECP8) ToBytes(b []byte, compress bool) {
-	var t [int(MODBYTES)]byte
-	MB := int(MODBYTES)
-
+	var t [8*int(MODBYTES)]byte
+	MB := 8*int(MODBYTES)
+	alt:=false
 	W := NewECP8()
 	W.Copy(E)
 	W.Affine()
-	b[0]=0x06
+	W.x.ToBytes(t[:])
 
-	W.x.geta().geta().GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+1] = t[i]
-	}
-	W.x.geta().geta().GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+MB+1] = t[i]
-	}
-	W.x.geta().getb().GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+2*MB+1] = t[i]
-	}
-	W.x.geta().getb().GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+3*MB+1] = t[i]
+	if (MODBITS-1)%8 <= 4 && ALLOW_ALT_COMPRESS {
+		alt=true
 	}
 
-	W.x.getb().geta().GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+4*MB+1] = t[i]
-	}
-	W.x.getb().geta().GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+5*MB+1] = t[i]
-	}
-	W.x.getb().getb().GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+6*MB+1] = t[i]
-	}
-	W.x.getb().getb().GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+7*MB+1] = t[i]
-	}
-
-	if !compress {
-		b[0]=0x04
-		W.y.geta().geta().GetA().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+8*MB+1] = t[i]
+    if alt {
+		for i:=0;i<MB;i++ {
+			b[i]=t[i]
 		}
-		W.y.geta().geta().GetB().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+9*MB+1] = t[i]
-		}
-		W.y.geta().getb().GetA().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+10*MB+1] = t[i]
-		}
-		W.y.geta().getb().GetB().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+11*MB+1] = t[i]
-		}
-
-		W.y.getb().geta().GetA().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+12*MB+1] = t[i]
-		}
-		W.y.getb().geta().GetB().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+13*MB+1] = t[i]
-		}
-		W.y.getb().getb().GetA().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+14*MB+1] = t[i]
-		}
-		W.y.getb().getb().GetB().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+15*MB+1] = t[i]
-		}
+        if !compress {
+            W.y.ToBytes(t[:]);
+            for i:=0;i<MB;i++ {
+				b[i+MB]=t[i]
+			}
+        } else {
+            b[0]|=0x80
+            if W.y.islarger()==1 {
+				b[0]|=0x20
+			}
+        }
+		
 	} else {
-		b[0]=0x02
-		if W.y.sign() == 1 {
-			b[0]=0x03
+		for i:=0;i<MB;i++ {
+			b[i+1]=t[i]
 		}
+        if !compress {
+            b[0]=0x04
+            W.y.ToBytes(t[:])
+	        for i:=0;i<MB;i++ {
+			    b[i+MB+1]=t[i]
+			}
+        } else {
+            b[0]=0x02
+            if W.y.sign() == 1 {
+                b[0]=0x03
+			}
+        }
 	}
 }
 
 /* convert from byte array to point */
 func ECP8_fromBytes(b []byte) *ECP8 {
-	var t [int(MODBYTES)]byte
-	MB := int(MODBYTES)
+	var t [8*int(MODBYTES)]byte
+	MB := 8*int(MODBYTES)
 	typ := int(b[0])
+	alt:=false
 
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+1]
+	if (MODBITS-1)%8 <= 4 && ALLOW_ALT_COMPRESS {
+		alt=true
 	}
-	ra := FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+MB+1]
-	}
-	rb := FromBytes(t[:])
 
-	ra4 := NewFP2bigs(ra, rb)
-
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+2*MB+1]
-	}
-	ra = FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+3*MB+1]
-	}
-	rb = FromBytes(t[:])
-
-	rb4 := NewFP2bigs(ra, rb)
-
-	ra8 := NewFP4fp2s(ra4, rb4)
-
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+4*MB+1]
-	}
-	ra = FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+5*MB+1]
-	}
-	rb = FromBytes(t[:])
-
-	ra4 = NewFP2bigs(ra, rb)
-
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+6*MB+1]
-	}
-	ra = FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+7*MB+1]
-	}
-	rb = FromBytes(t[:])
-
-	rb4 = NewFP2bigs(ra, rb)
-
-	rb8 := NewFP4fp2s(ra4, rb4)
-
-	rx := NewFP8fp4s(ra8, rb8)
-
-	if typ == 0x04 {
-
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+8*MB+1]
+	if alt {
+        for i:=0;i<MB;i++  {
+			t[i]=b[i]
 		}
-		ra = FromBytes(t[:])
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+9*MB+1]
+        t[0]&=0x1f
+        rx:=FP8_fromBytes(t[:]);
+        if (b[0]&0x80)==0 {
+            for i:=0;i<MB;i++ {
+				t[i]=b[i+MB]
+			}
+            ry:=FP8_fromBytes(t[:])
+            return NewECP8fp8s(rx,ry)
+        } else {
+            sgn:=(b[0]&0x20)>>5
+            P:=NewECP8fp8(rx,0)
+            cmp:=P.y.islarger()
+            if (sgn==1 && cmp!=1) || (sgn==0 && cmp==1) {
+				P.neg()
+			}
+            return P;
+        }
+    } else {
+		for i:=0;i<MB;i++ {
+			t[i]=b[i+1]
 		}
-		rb = FromBytes(t[:])
-
-		ra4 = NewFP2bigs(ra, rb)
-
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+10*MB+1]
-		}
-		ra = FromBytes(t[:])
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+11*MB+1]
-		}
-		rb = FromBytes(t[:])
-
-		rb4 = NewFP2bigs(ra, rb)
-
-		ra8 = NewFP4fp2s(ra4, rb4)
-
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+12*MB+1]
-		}
-		ra = FromBytes(t[:])
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+13*MB+1]
-		}
-		rb = FromBytes(t[:])
-
-		ra4 = NewFP2bigs(ra, rb)
-
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+14*MB+1]
-		}
-		ra = FromBytes(t[:])
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+15*MB+1]
-		}
-		rb = FromBytes(t[:])
-
-		rb4 = NewFP2bigs(ra, rb)
-
-		rb8 = NewFP4fp2s(ra4, rb4)
-
-		ry := NewFP8fp4s(ra8, rb8)
-
-		return NewECP8fp8s(rx, ry)
-	} else {
-		return NewECP8fp8(rx,typ&1)
-	}
+        rx:=FP8_fromBytes(t[:])
+        if typ == 0x04 {
+		    for i:=0;i<MB;i++ {
+				t[i]=b[i+MB+1]
+			}
+		    ry:=FP8_fromBytes(t[:])
+		    return NewECP8fp8s(rx,ry)
+        } else {
+            return NewECP8fp8(rx,typ&1)
+        }
+    }
 }
 
 /* convert this to hex string */
@@ -417,13 +314,14 @@ func NewECP8fp8s(ix *FP8, iy *FP8) *ECP8 {
 /* construct this from x - but set to O if not on curve */
 func NewECP8fp8(ix *FP8, s int) *ECP8 {
 	E := new(ECP8)
+	h:=NewFP()
 	E.x = NewFP8copy(ix)
 	E.y = NewFP8int(1)
 	E.z = NewFP8int(1)
 	E.x.norm()
 	rhs := RHS8(E.x)
-	if rhs.qr() == 1  {
-		rhs.sqrt()
+	if rhs.qr(h) == 1  {
+		rhs.sqrt(h)
 		if rhs.sign() != s {
 			rhs.neg()
 		}
@@ -620,7 +518,7 @@ func ECP8_frob_constants() [3]*FP2 {
 	if SEXTIC_TWIST == M_TYPE {
 		F1.mul_ip()
 		F1.norm()
-		F1.inverse()
+		F1.inverse(nil)
 		F0.copy(F1)
 		F0.sqr()
 		F1.mul(F0)
@@ -848,12 +746,12 @@ func ECP8_map2point(H *FP8) *ECP8 {
     T:=NewFP8copy(H)
     sgn:=T.sign()
 
-	Z:=NewFPint(RIADZG2);
+	Z:=NewFPint(RIADZG2A);
 	X1:=NewFP8fp(Z)
 	X3:=NewFP8copy(X1)
 	A:=RHS8(X1)
 	W:=NewFP8copy(A)
-	W.sqrt();
+	W.sqrt(nil);
 
 	s:=NewFPbig(NewBIGints(SQRTm3))
 	Z.mul(s)
@@ -865,7 +763,7 @@ func ECP8_map2point(H *FP8) *ECP8 {
 	NY.copy(T); NY.mul(Y)
 	
 	NY.tmul(Z)
-	NY.inverse()
+	NY.inverse(nil)
 
 	W.tmul(Z)
     if (W.sign()==1) {
@@ -885,11 +783,11 @@ func ECP8_map2point(H *FP8) *ECP8 {
 	X3.add(A); X3.norm()
 
     Y.copy(RHS8(X2))
-    X3.cmove(X2,Y.qr())
+    X3.cmove(X2,Y.qr(nil))
     Y.copy(RHS8(X1))
-    X3.cmove(X1,Y.qr())
+    X3.cmove(X1,Y.qr(nil))
     Y.copy(RHS8(X3))
-    Y.sqrt()
+    Y.sqrt(nil)
 
     ne:=Y.sign()^sgn
     W.copy(Y); W.neg(); W.norm()

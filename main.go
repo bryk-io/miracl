@@ -8,4 +8,4 @@ func main() {
 	fmt.Printf("upstream commit: %s\n", Version)
 }
 
-const Version="08e148236140fdf96e9cde73ff12d4356f62a61b"
+const Version="d0f15358504f1303fae615e54a9b721e8f056ed1"

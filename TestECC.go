@@ -101,8 +101,8 @@ func ecdh_ED25519(rng *core.RAND) {
 	}
 	/* Calculate common key using DH - IEEE 1363 method */
 
-	ED25519.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:])
-	ED25519.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:])
+	ED25519.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:], 0)
+	ED25519.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:], 0)
 
 	same := true
 	for i := 0; i < ED25519.EFS; i++ {
@@ -245,8 +245,8 @@ func ecdh_NIST256(rng *core.RAND) {
 	}
 	/* Calculate common key using DH - IEEE 1363 method */
 
-	NIST256.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:])
-	NIST256.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:])
+	NIST256.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:], 0)
+	NIST256.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:], 0)
 
 	same := true
 	for i := 0; i < NIST256.EFS; i++ {
@@ -389,8 +389,8 @@ func ecdh_GOLDILOCKS(rng *core.RAND) {
 	}
 	/* Calculate common key using DH - IEEE 1363 method */
 
-	GOLDILOCKS.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:])
-	GOLDILOCKS.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:])
+	GOLDILOCKS.ECDH_ECPSVDP_DH(S0, W1[:], Z0[:], 0)
+	GOLDILOCKS.ECDH_ECPSVDP_DH(S1[:], W0[:], Z1[:], 0)
 
 	same := true
 	for i := 0; i < GOLDILOCKS.EFS; i++ {
@@ -486,7 +486,7 @@ func rsa_2048(rng *core.RAND) {
 	M := []byte(message)
 
 	fmt.Printf("Encrypting test string\n")
-	E := RSA2048.RSA_OAEP_ENCODE(sha, M, rng, nil) /* OAEP encode message M to E  */
+	E := core.RSA_OAEP_ENCODE(sha, M, rng, nil,RSA2048.RFS) /* OAEP encode message M to E  */
 
 	RSA2048.RSA_ENCRYPT(pub, E, C[:]) /* encrypt encoded message */
 	fmt.Printf("Ciphertext= 0x")
@@ -494,13 +494,21 @@ func rsa_2048(rng *core.RAND) {
 
 	fmt.Printf("Decrypting test string\n")
 	RSA2048.RSA_DECRYPT(priv, C[:], ML[:])
-	MS := RSA2048.RSA_OAEP_DECODE(sha, nil, ML[:]) /* OAEP decode message  */
+	MS := core.RSA_OAEP_DECODE(sha, nil, ML[:],RSA2048.RFS) /* OAEP decode message  */
 
 	message = string(MS)
 	fmt.Printf(message)
 
+    T:=core.RSA_PSS_ENCODE(sha,M,rng,RSA2048.RFS)
+	fmt.Printf("T= 0x"); printBinary(T[:])
+    if core.RSA_PSS_VERIFY(sha,M,T) {
+        fmt.Printf("PSS Encoding OK\n")
+    } else {
+        fmt.Printf("PSS Encoding FAILED\n")
+	}
+
 	fmt.Printf("Signing message\n")
-	RSA2048.RSA_PKCS15(sha, M, C[:])
+	core.RSA_PKCS15(sha, M, C[:],RSA2048.RFS)
 
 	RSA2048.RSA_DECRYPT(priv, C[:], S[:]) /* create signature in S */
 

@@ -32,8 +32,9 @@ const POSITOWER int = 1
 // Modulus details
 const MODBITS uint = 381 /* Number of bits in Modulus */
 const PM1D2 uint = 1  /* Modulus mod 8 */
-const RIADZ int = -3   /* hash-to-point Z */
-const RIADZG2 int = -1   /* G2 hash-to-point Z */
+const RIADZ int = 11   /* hash-to-point Z */
+const RIADZG2A int = -2   /* G2 hash-to-point Z */
+const RIADZG2B int = -1   /* G2 hash-to-point Z */
 const MODTYPE int = NOT_SPECIAL //NOT_SPECIAL
 const QNRI int = 0    // Fp2 QNR
 const TOWER int = NEGATOWER   // Tower type

@@ -125,7 +125,7 @@ func (E *ECP2) Affine() {
 		E.y.reduce()
 		return
 	}
-	E.z.inverse()
+	E.z.inverse(nil)
 
 	E.x.mul(E.z)
 	E.x.reduce()
@@ -167,72 +167,100 @@ func (E *ECP2) getz() *FP2 {
 
 /* convert to byte array */
 func (E *ECP2) ToBytes(b []byte,compress bool) {
-	var t [int(MODBYTES)]byte
-	MB := int(MODBYTES)
-
+	var t [2*int(MODBYTES)]byte
+	MB := 2*int(MODBYTES)
+	alt:=false
 	W := NewECP2()
 	W.Copy(E)
 	W.Affine()
+	W.x.ToBytes(t[:])
 
-	W.x.GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+1] = t[i]
-	}
-	W.x.GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+MB+1] = t[i]
+	if (MODBITS-1)%8 <= 4 && ALLOW_ALT_COMPRESS {
+		alt=true
 	}
 
-	if !compress {
-		b[0]=0x04
-		W.y.GetA().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+2*MB+1] = t[i]
+    if alt {
+		for i:=0;i<MB;i++ {
+			b[i]=t[i]
 		}
-		W.y.GetB().ToBytes(t[:])
-		for i := 0; i < MB; i++ {
-			b[i+3*MB+1] = t[i]
-		}
+        if !compress {
+            W.y.ToBytes(t[:]);
+            for i:=0;i<MB;i++ {
+				b[i+MB]=t[i]
+			}
+        } else {
+            b[0]|=0x80
+            if W.y.islarger()==1 {
+				b[0]|=0x20
+			}
+        }
+		
 	} else {
-		b[0]=0x02
-		if W.y.sign() == 1 {
-			b[0]=0x03
+		for i:=0;i<MB;i++ {
+			b[i+1]=t[i]
 		}
+        if !compress {
+            b[0]=0x04
+            W.y.ToBytes(t[:])
+	        for i:=0;i<MB;i++ {
+			    b[i+MB+1]=t[i]
+			}
+        } else {
+            b[0]=0x02
+            if W.y.sign() == 1 {
+                b[0]=0x03
+			}
+        }
 	}
-
 }
 
 /* convert from byte array to point */
 func ECP2_fromBytes(b []byte) *ECP2 {
-	var t [int(MODBYTES)]byte
-	MB := int(MODBYTES)
+	var t [2*int(MODBYTES)]byte
+	MB := 2*int(MODBYTES)
 	typ := int(b[0])
+	alt:=false
 
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+1]
+	if (MODBITS-1)%8 <= 4 && ALLOW_ALT_COMPRESS {
+		alt=true
 	}
-	ra := FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+MB+1]
-	}
-	rb := FromBytes(t[:])
-	rx := NewFP2bigs(ra, rb)
 
-	if typ == 0x04 {
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+2*MB+1]
+	if alt {
+        for i:=0;i<MB;i++  {
+			t[i]=b[i]
 		}
-		ra = FromBytes(t[:])
-		for i := 0; i < MB; i++ {
-			t[i] = b[i+3*MB+1]
+        t[0]&=0x1f
+        rx:=FP2_fromBytes(t[:]);
+        if (b[0]&0x80)==0 {
+            for i:=0;i<MB;i++ {
+				t[i]=b[i+MB]
+			}
+            ry:=FP2_fromBytes(t[:])
+            return NewECP2fp2s(rx,ry)
+        } else {
+            sgn:=(b[0]&0x20)>>5
+            P:=NewECP2fp2(rx,0)
+            cmp:=P.y.islarger()
+            if (sgn==1 && cmp!=1) || (sgn==0 && cmp==1) {
+				P.neg()
+			}
+            return P;
+        }
+    } else {
+		for i:=0;i<MB;i++ {
+			t[i]=b[i+1]
 		}
-		rb = FromBytes(t[:])
-		ry := NewFP2bigs(ra, rb)
-
-		return NewECP2fp2s(rx, ry)
-	} else {
-		return NewECP2fp2(rx,typ&1)
-	}
+        rx:=FP2_fromBytes(t[:])
+        if typ == 0x04 {
+		    for i:=0;i<MB;i++ {
+				t[i]=b[i+MB+1]
+			}
+		    ry:=FP2_fromBytes(t[:])
+		    return NewECP2fp2s(rx,ry)
+        } else {
+            return NewECP2fp2(rx,typ&1)
+        }
+    }
 }
 
 /* convert this to hex string */
@@ -286,13 +314,14 @@ func NewECP2fp2s(ix *FP2, iy *FP2) *ECP2 {
 /* construct this from x - but set to O if not on curve */
 func NewECP2fp2(ix *FP2, s int) *ECP2 {
 	E := new(ECP2)
+	h:=NewFP()
 	E.x = NewFP2copy(ix)
 	E.y = NewFP2int(1)
 	E.z = NewFP2int(1)
 	E.x.norm()
 	rhs := RHS2(E.x)
-	if rhs.qr() == 1 {
-		rhs.sqrt()
+	if rhs.qr(h) == 1 {
+		rhs.sqrt(h)
 		if rhs.sign() != s {
 			rhs.neg()
 		}
@@ -568,7 +597,7 @@ func (E *ECP2) Cfp() {
 	Frb := NewBIGints(Frb)
 	X := NewFP2bigs(Fra, Frb)
 	if SEXTIC_TWIST == M_TYPE {
-		X.inverse()
+		X.inverse(nil)
 		X.norm()
 	}
 
@@ -734,61 +763,170 @@ func ECP2_hap2point(h *BIG) *ECP2 {
 /* Constant time Map to Point */
  func ECP2_map2point(H *FP2) *ECP2 {
     // Shallue and van de Woestijne
+	var Q *ECP2
     NY:=NewFP2int(1)
     T:=NewFP2copy(H) /**/
 	sgn:=T.sign() /**/
+	if HTC_ISO_G2 == 0 {
+/* */
+		Z:=NewFPint(RIADZG2A);
+		X1:=NewFP2fp(Z)
+		X3:=NewFP2copy(X1)
+		A:=RHS2(X1)
+		W:=NewFP2copy(A)
+		if (RIADZG2A==-1 && RIADZG2B==0 && SEXTIC_TWIST==M_TYPE && CURVE_B_I==4) { // special case for BLS12381
+			W.copy(NewFP2ints(2,1))
+		} else {
+			W.sqrt(nil)
+		}
+		s:=NewFPbig(NewBIGints(SQRTm3))
+		Z.mul(s)
 
-	Z:=NewFPint(RIADZG2);
-	X1:=NewFP2fp(Z)
-	X3:=NewFP2copy(X1)
-	A:=RHS2(X1)
-	W:=NewFP2copy(A)
-    if (RIADZG2==-1 && SEXTIC_TWIST==M_TYPE && CURVE_B_I==4) { // special case for BLS12381
-        W.copy(NewFP2ints(2,1))
-    } else {
-        W.sqrt()
-    }
-	s:=NewFPbig(NewBIGints(SQRTm3))
-	Z.mul(s)
-
-	T.sqr()
-	Y:=NewFP2copy(A); Y.mul(T)
-	T.copy(NY); T.add(Y); T.norm()
-	Y.rsub(NY); Y.norm()
-	NY.copy(T); NY.mul(Y); 
+		T.sqr()
+		Y:=NewFP2copy(A); Y.mul(T)
+		T.copy(NY); T.add(Y); T.norm()
+		Y.rsub(NY); Y.norm()
+		NY.copy(T); NY.mul(Y); 
 	
-	NY.pmul(Z)
-	NY.inverse()
+		NY.pmul(Z)
+		NY.inverse(nil)
 
-    W.pmul(Z)
-    if (W.sign()==1) {
-        W.neg()
-        W.norm()
-    }
-    W.pmul(Z)
-	W.mul(H); W.mul(Y); W.mul(NY)
+		W.pmul(Z)
+		if (W.sign()==1) {
+			W.neg()
+			W.norm()
+		}
+		W.pmul(Z)
+		W.mul(H); W.mul(Y); W.mul(NY)
 
-	X1.neg(); X1.norm(); X1.div2()
-	X2:=NewFP2copy(X1)
-	X1.sub(W); X1.norm()
-	X2.add(W); X2.norm()
-	A.add(A); A.add(A); A.norm()
-	T.sqr(); T.mul(NY); T.sqr()
-	A.mul(T)
-	X3.add(A); X3.norm()
+		X1.neg(); X1.norm(); X1.div2()
+		X2:=NewFP2copy(X1)
+		X1.sub(W); X1.norm()
+		X2.add(W); X2.norm()
+		A.add(A); A.add(A); A.norm()
+		T.sqr(); T.mul(NY); T.sqr()
+		A.mul(T)
+		X3.add(A); X3.norm()
 
-    Y.copy(RHS2(X2))
-    X3.cmove(X2,Y.qr())
-    Y.copy(RHS2(X1))
-    X3.cmove(X1,Y.qr())
-    Y.copy(RHS2(X3))
-    Y.sqrt()
+		Y.copy(RHS2(X2))
+		X3.cmove(X2,Y.qr(nil))
+		Y.copy(RHS2(X1))
+		X3.cmove(X1,Y.qr(nil))
+		Y.copy(RHS2(X3))
+		Y.sqrt(nil)
 
-    ne:=Y.sign()^sgn
-    W.copy(Y); W.neg(); W.norm()
-    Y.cmove(W,ne)
+		ne:=Y.sign()^sgn
+		W.copy(Y); W.neg(); W.norm()
+		Y.cmove(W,ne)
 
-    return NewECP2fp2s(X3,Y);
+		Q=NewECP2fp2s(X3,Y)
+/* */
+	} else {
+
+/* CAHCZS
+		Q=NewECP2()
+		Ad:=NewFP2bigs(NewBIGints(CURVE_Adr), NewBIGints(CURVE_Adi))
+		Bd:=NewFP2bigs(NewBIGints(CURVE_Bdr), NewBIGints(CURVE_Bdi))
+		ZZ:=NewFP2ints(RIADZG2A,RIADZG2B)
+		hint:=NewFP()
+
+		T.sqr()
+		T.mul(ZZ)
+		W:=NewFP2copy(T)
+		W.add(NY); W.norm()
+
+		W.mul(T)
+		D:=NewFP2copy(Ad)
+		D.mul(W)
+
+		W.add(NY); W.norm()
+		W.mul(Bd); 
+		W.neg(); W.norm()
+
+		X2:=NewFP2copy(W)
+		X3:=NewFP2copy(T)
+		X3.mul(X2)
+
+		GX1:=NewFP2copy(X2); GX1.sqr()
+		D2:=NewFP2copy(D); D2.sqr()
+
+        W.copy(Ad); W.mul(D2); GX1.add(W); GX1.norm(); GX1.mul(X2); D2.mul(D); W.copy(Bd); W.mul(D2); GX1.add(W); GX1.norm() // x^3+Ax+b
+
+        W.copy(GX1); W.mul(D)
+        qr:=W.qr(hint)
+        D.copy(W); D.inverse(hint)
+        D.mul(GX1)
+        X2.mul(D)
+        X3.mul(D)
+        T.mul(H)
+        D2.copy(D); D2.sqr()
+
+        D.copy(D2); D.mul(T)
+        T.copy(W); T.mul(ZZ)
+
+		s:=NewFPbig(NewBIGints(CURVE_HTPC2))
+        s.mul(hint);
+
+        X2.cmove(X3,1-qr)
+        W.cmove(T,1-qr)
+        D2.cmove(D,1-qr)
+        hint.cmove(s,1-qr)
+
+        Y:=NewFP2copy(W); Y.sqrt(hint)
+        Y.mul(D2)
+
+		ne:=Y.sign()^sgn
+		W.copy(Y); W.neg(); W.norm()
+		Y.cmove(W,ne)
+
+		k:=0
+		isox:=HTC_ISO_G2
+		isoy:=3*(isox-1)/2
+
+//xnum
+		xnum:=NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k])); k+=1
+		for i:=0;i<isox;i++ {
+			xnum.mul(X2)
+			xnum.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+			xnum.norm();
+		}
+//xden
+		xden:=NewFP2copy(X2)
+		xden.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+		xden.norm();
+		for i:=0;i<isox-2;i++ {
+			xden.mul(X2)
+			xden.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+			xden.norm();
+		}		
+//ynum
+		ynum:=NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k])); k+=1
+		for i:=0;i<isoy;i++ {
+			ynum.mul(X2)
+			ynum.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+			ynum.norm();
+		}
+//yden
+		yden:=NewFP2copy(X2)
+		yden.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+		yden.norm();
+		for i:=0;i<isoy-1;i++ {
+			yden.mul(X2)
+			yden.add(NewFP2bigs(NewBIGints(PCR[k]),NewBIGints(PCI[k]))); k+=1
+			yden.norm();
+		}	
+		ynum.mul(Y)
+		T.copy(xnum); T.mul(yden)
+		Q.x.copy(T)
+		T.copy(ynum); T.mul(xden)
+		Q.y.copy(T)
+		T.copy(xden); T.mul(yden)
+		Q.z.copy(T)
+
+CAHCZF */
+
+	}
+	return Q
 }
 
 /* Map octet string to curve point */
