@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+
+	"go.bryk.io/miracl/core"
 )
 
 func main() {
-	fmt.Printf("upstream commit: %s\n", Version)
+	fmt.Printf("upstream commit: %s\n", core.Version)
 }
-
-const Version="d0f15358504f1303fae615e54a9b721e8f056ed1"

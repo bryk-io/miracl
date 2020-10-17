@@ -23,6 +23,18 @@ cp Bench* ../../.
 
 ## Final clean-up
 cd ../..
-sed -i '' '$d' main.go
-echo "const Version=\"${UPSTREAM_VERSION}\"" >> main.go
+#sed -i '' '$d' main.go
+printf "package core\nconst Version=\"%s\"" "${UPSTREAM_VERSION}" > core/info.go
 rm -rf temp
+
+## Run tests and remove files
+go run ./TestECC.go
+go run ./TestBLS.go
+go run ./TestHPKE.go
+go run ./TestNHS.go
+go run ./TestMPIN.go < pins.txt
+rm Test* pins.txt
+
+## Run benchmarks and remove files
+go run ./BenchtestALL.go
+rm BenchtestALL.go

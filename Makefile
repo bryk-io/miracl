@@ -12,15 +12,11 @@ build:
 
 ## test: Run all tests available on the AMCL library
 test:
-	go run ./TestECC.go
-	go run ./TestBLS.go
-	go run ./TestHPKE.go
-	go run ./TestNHS.go
-	go run ./TestMPIN.go < pins.txt
+	go test -v ./...
 
 ## benchmark: Run all benchmarks available on the AMCL library
 benchmark:
-	go run ./BenchtestALL.go
+	go test -v -bench=. ./...
 
 ## info: Show package information.
 info:
