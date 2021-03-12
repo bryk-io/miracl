@@ -13,7 +13,7 @@ jobs:
   test:
     name: code quality and correctness
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       # Go 1.15
       - name: Set up Go 1.15
@@ -45,7 +45,7 @@ jobs:
       # if: steps.vendor-cache.outputs.cache-hit != 'true'
       - name: Restore modules from cache
         id: vendor-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         env:
           cache-name: vendor
         with:
