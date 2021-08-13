@@ -482,166 +482,171 @@ func Fexp(m *FP24) *FP24 {
 	r.Mul(lv)
 
 	/* Hard part of final exp */
-// See https://eprint.iacr.org/2020/875.pdf
-		y1:=NewFP24copy(r)
-		y1.usqr()
-		y1.Mul(r) // y1=r^3
+	// See https://eprint.iacr.org/2020/875.pdf
+	y1 := NewFP24copy(r)
+	y1.usqr()
+	y1.Mul(r) // y1=r^3
 
-		y0:=NewFP24copy(r.Pow(x))
-		if SIGN_OF_X == NEGATIVEX {
-			y0.conj()
-		}
-		t0:=NewFP24copy(r); t0.conj()
-		r.Copy(y0)
-		r.Mul(t0)
-
-		y0.Copy(r.Pow(x))
-		if SIGN_OF_X == NEGATIVEX {
-			y0.conj()
-		}
-		t0.Copy(r); t0.conj()
-		r.Copy(y0)
-		r.Mul(t0)
-
-// ^(x+p)
-		y0.Copy(r.Pow(x));
-		if SIGN_OF_X == NEGATIVEX {
-			y0.conj()
-		}
-		t0.Copy(r)
-		t0.frob(f,1)
-		r.Copy(y0)
-		r.Mul(t0);
-
-// ^(x^2+p^2)
-		y0.Copy(r.Pow(x))
-		y0.Copy(y0.Pow(x))
-		t0.Copy(r)
-		t0.frob(f,2)
-		r.Copy(y0)
-		r.Mul(t0)
-
-// ^(x^4+p^4-1)
-		y0.Copy(r.Pow(x))
-		y0.Copy(y0.Pow(x))
-		y0.Copy(y0.Pow(x))
-		y0.Copy(y0.Pow(x))
-		t0.Copy(r)
-		t0.frob(f,4); 
-		y0.Mul(t0)
-		t0.Copy(r); t0.conj()
-		r.Copy(y0)
-		r.Mul(t0)
-
-		r.Mul(y1)
-		r.reduce();
-
-/*
-	// Ghamman & Fouotsa Method
-
-	t7 := NewFP24copy(r)
-	t7.usqr()
-	t1 := t7.Pow(x)
-
-	x.fshr(1)
-	t2 := t1.Pow(x)
-	x.fshl(1)
-
+	y0 := NewFP24copy(r.Pow(x))
 	if SIGN_OF_X == NEGATIVEX {
-		t1.conj()
+		y0.conj()
 	}
-	t3 := NewFP24copy(t1)
-	t3.conj()
-	t2.Mul(t3)
-	t2.Mul(r)
-
-	t3 = t2.Pow(x)
-	t4 := t3.Pow(x)
-	t5 := t4.Pow(x)
-
-	if SIGN_OF_X == NEGATIVEX {
-		t3.conj()
-		t5.conj()
-	}
-
-	t3.frob(f, 6)
-	t4.frob(f, 5)
-	t3.Mul(t4)
-
-	t6 := t5.Pow(x)
-	if SIGN_OF_X == NEGATIVEX {
-		t6.conj()
-	}
-
-	t5.frob(f, 4)
-	t3.Mul(t5)
-
-	t0 := NewFP24copy(t2)
+	t0 := NewFP24copy(r)
 	t0.conj()
-	t6.Mul(t0)
+	r.Copy(y0)
+	r.Mul(t0)
 
-	t5.Copy(t6)
-	t5.frob(f, 3)
-
-	t3.Mul(t5)
-	t5 = t6.Pow(x)
-	t6 = t5.Pow(x)
-
+	y0.Copy(r.Pow(x))
 	if SIGN_OF_X == NEGATIVEX {
-		t5.conj()
+		y0.conj()
 	}
+	t0.Copy(r)
+	t0.conj()
+	r.Copy(y0)
+	r.Mul(t0)
 
-	t0.Copy(t5)
-	t0.frob(f, 2)
-	t3.Mul(t0)
-	t0.Copy(t6)
+	// ^(x+p)
+	y0.Copy(r.Pow(x))
+	if SIGN_OF_X == NEGATIVEX {
+		y0.conj()
+	}
+	t0.Copy(r)
 	t0.frob(f, 1)
+	r.Copy(y0)
+	r.Mul(t0)
 
-	t3.Mul(t0)
-	t5 = t6.Pow(x)
+	// ^(x^2+p^2)
+	y0.Copy(r.Pow(x))
+	y0.Copy(y0.Pow(x))
+	t0.Copy(r)
+	t0.frob(f, 2)
+	r.Copy(y0)
+	r.Mul(t0)
 
-	if SIGN_OF_X == NEGATIVEX {
-		t5.conj()
-	}
-	t2.frob(f, 7)
+	// ^(x^4+p^4-1)
+	y0.Copy(r.Pow(x))
+	y0.Copy(y0.Pow(x))
+	y0.Copy(y0.Pow(x))
+	y0.Copy(y0.Pow(x))
+	t0.Copy(r)
+	t0.frob(f, 4)
+	y0.Mul(t0)
+	t0.Copy(r)
+	t0.conj()
+	r.Copy(y0)
+	r.Mul(t0)
 
-	t5.Mul(t7)
-	t3.Mul(t2)
-	t3.Mul(t5)
-
-	r.Mul(t3)
+	r.Mul(y1)
 	r.reduce()
-*/
+
+	/*
+		// Ghamman & Fouotsa Method
+
+		t7 := NewFP24copy(r)
+		t7.usqr()
+		t1 := t7.Pow(x)
+
+		x.fshr(1)
+		t2 := t1.Pow(x)
+		x.fshl(1)
+
+		if SIGN_OF_X == NEGATIVEX {
+			t1.conj()
+		}
+		t3 := NewFP24copy(t1)
+		t3.conj()
+		t2.Mul(t3)
+		t2.Mul(r)
+
+		t3 = t2.Pow(x)
+		t4 := t3.Pow(x)
+		t5 := t4.Pow(x)
+
+		if SIGN_OF_X == NEGATIVEX {
+			t3.conj()
+			t5.conj()
+		}
+
+		t3.frob(f, 6)
+		t4.frob(f, 5)
+		t3.Mul(t4)
+
+		t6 := t5.Pow(x)
+		if SIGN_OF_X == NEGATIVEX {
+			t6.conj()
+		}
+
+		t5.frob(f, 4)
+		t3.Mul(t5)
+
+		t0 := NewFP24copy(t2)
+		t0.conj()
+		t6.Mul(t0)
+
+		t5.Copy(t6)
+		t5.frob(f, 3)
+
+		t3.Mul(t5)
+		t5 = t6.Pow(x)
+		t6 = t5.Pow(x)
+
+		if SIGN_OF_X == NEGATIVEX {
+			t5.conj()
+		}
+
+		t0.Copy(t5)
+		t0.frob(f, 2)
+		t3.Mul(t0)
+		t0.Copy(t6)
+		t0.frob(f, 1)
+
+		t3.Mul(t0)
+		t5 = t6.Pow(x)
+
+		if SIGN_OF_X == NEGATIVEX {
+			t5.conj()
+		}
+		t2.frob(f, 7)
+
+		t5.Mul(t7)
+		t3.Mul(t2)
+		t3.Mul(t5)
+
+		r.Mul(t3)
+		r.reduce()
+	*/
 	return r
 }
 
 /* GLV method */
-func glv(e *BIG) []*BIG {
+func glv(ee *BIG) []*BIG {
 	var u []*BIG
 
 	q := NewBIGints(CURVE_Order)
 	x := NewBIGints(CURVE_Bnx)
 	x2 := smul(x, x)
 	x = smul(x2, x2)
-	u = append(u, NewBIGcopy(e))
-	u[0].Mod(x)
-	u = append(u, NewBIGcopy(e))
-	u[1].div(x)
+	bd := uint(q.nbits()-x.nbits())
+	u = append(u, NewBIGcopy(ee))
+	u[0].ctmod(x,bd)
+	u = append(u, NewBIGcopy(ee))
+	u[1].ctdiv(x,bd)
 	u[1].rsub(q)
 	return u
 }
 
 /* Galbraith & Scott Method */
-func gs(e *BIG) []*BIG {
+func gs(ee *BIG) []*BIG {
 	var u []*BIG
 
 	q := NewBIGints(CURVE_Order)
 	x := NewBIGints(CURVE_Bnx)
-	w := NewBIGcopy(e)
+	bd := uint(q.nbits()-x.nbits())
+	w := NewBIGcopy(ee)
 	for i := 0; i < 7; i++ {
 		u = append(u, NewBIGcopy(w))
-		u[i].Mod(x)
-		w.div(x)
+		u[i].ctmod(x,bd)
+		w.ctdiv(x,bd)
 	}
 	u = append(u, NewBIGcopy(w))
 	if SIGN_OF_X == NEGATIVEX {
@@ -658,16 +663,18 @@ func gs(e *BIG) []*BIG {
 /* Multiply P by e in group G1 */
 func G1mul(P *ECP, e *BIG) *ECP {
 	var R *ECP
+	q := NewBIGints(CURVE_Order)
+	ee:= NewBIGcopy(e); ee.Mod(q)
 	if USE_GLV {
 		R = NewECP()
 		R.Copy(P)
 		Q := NewECP()
 		Q.Copy(P)
 		Q.Affine()
-		q := NewBIGints(CURVE_Order)
+
 		cru := NewFPbig(NewBIGints(CRu))
 		t := NewBIGint(0)
-		u := glv(e)
+		u := glv(ee)
 		Q.getx().mul(cru)
 
 		np := u[0].nbits()
@@ -690,7 +697,7 @@ func G1mul(P *ECP, e *BIG) *ECP {
 		R = R.Mul2(u[0], Q, u[1])
 
 	} else {
-		R = P.mul(e)
+		R = P.clmul(ee,q)
 	}
 	return R
 }
@@ -698,13 +705,13 @@ func G1mul(P *ECP, e *BIG) *ECP {
 /* Multiply P by e in group G2 */
 func G2mul(P *ECP4, e *BIG) *ECP4 {
 	var R *ECP4
+	q := NewBIGints(CURVE_Order)
+	ee:= NewBIGcopy(e); ee.Mod(q)
 	if USE_GS_G2 {
 		var Q []*ECP4
 
 		F := ECP4_frob_constants()
-
-		q := NewBIGints(CURVE_Order)
-		u := gs(e)
+		u := gs(ee)
 
 		t := NewBIGint(0)
 
@@ -729,7 +736,7 @@ func G2mul(P *ECP4, e *BIG) *ECP4 {
 		R = mul8(Q, u)
 
 	} else {
-		R = P.mul(e)
+		R = P.mul(ee)
 	}
 	return R
 }
@@ -738,13 +745,14 @@ func G2mul(P *ECP4, e *BIG) *ECP4 {
 /* Note that this method requires a lot of RAM!  */
 func GTpow(d *FP24, e *BIG) *FP24 {
 	var r *FP24
+	q := NewBIGints(CURVE_Order)
+	ee:= NewBIGcopy(e); ee.Mod(q)
 	if USE_GS_GT {
 		var g []*FP24
 		f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
-		q := NewBIGints(CURVE_Order)
 		t := NewBIGint(0)
 
-		u := gs(e)
+		u := gs(ee)
 
 		g = append(g, NewFP24copy(d))
 		for i := 1; i < 8; i++ {
@@ -764,49 +772,59 @@ func GTpow(d *FP24, e *BIG) *FP24 {
 		}
 		r = pow8(g, u)
 	} else {
-		r = d.Pow(e)
+		r = d.Pow(ee)
 	}
 	return r
 }
 
 /* test G1 group membership */
-	func G1member(P *ECP) bool {
-		q := NewBIGints(CURVE_Order)
-		if P.Is_infinity() {return false}
-		W:=G1mul(P,q)
-		if !W.Is_infinity() {return false}
-		return true
-	}
+func G1member(P *ECP) bool {
+	q := NewBIGints(CURVE_Order)
+	if P.Is_infinity() {return false}
+	W:=P.mul(q)
+	if !W.Is_infinity() {return false}
+	return true
+}
 
 /* test G2 group membership */
-	func G2member(P *ECP4) bool {
-		q := NewBIGints(CURVE_Order)
-		if P.Is_infinity() {return false}
-		W:=G2mul(P,q)
-		if !W.Is_infinity() {return false}
-		return true
-	}
+func G2member(P *ECP4) bool {
+	q := NewBIGints(CURVE_Order)
+	if P.Is_infinity() {return false}
+	W:=P.mul(q)
+	if !W.Is_infinity() {return false}
+	return true
+}
 
 /* test group membership - no longer needed*/
 /* Check that m!=1, conj(m)*m==1, and m.m^{p^8}=m^{p^4} */
 
 func GTmember(m *FP24) bool {
-	if m.Isunity() {return false}
-	r:=NewFP24copy(m)
+	if m.Isunity() {
+		return false
+	}
+	r := NewFP24copy(m)
 	r.conj()
 	r.Mul(m)
-	if !r.Isunity() {return false}
+	if !r.Isunity() {
+		return false
+	}
 
-	f:=NewFP2bigs(NewBIGints(Fra),NewBIGints(Frb))
+	f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
 
-	r.Copy(m); r.frob(f,4)
-	w:=NewFP24copy(r); w.frob(f,4)
+	r.Copy(m)
+	r.frob(f, 4)
+	w := NewFP24copy(r)
+	w.frob(f, 4)
 	w.Mul(m)
-	if !w.Equals(r) {return false}
+	if !w.Equals(r) {
+		return false
+	}
 
 	q := NewBIGints(CURVE_Order)
 	w.Copy(m)
-	r.Copy(GTpow(w,q))
-	if !r.Isunity() {return false}
+	r.Copy(GTpow(w, q))
+	if !r.Isunity() {
+		return false
+	}
 	return true
 }

@@ -1,7 +1,6 @@
 .PHONY: *
 .DEFAULT_GOAL:=help
 
-## help: Prints this help message
 help:
 	@echo "Commands available"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /' | sort
@@ -18,6 +17,6 @@ test:
 benchmark:
 	go test -v -bench=. ./...
 
-## info: Show package information.
-info:
+## version: Show package version
+version:
 	@go run main.go

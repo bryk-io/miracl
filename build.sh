@@ -4,7 +4,7 @@ rm -rf core
 
 # Clone fork repository and setup build contents
 git clone https://github.com/bryk-io/miracl-core.git temp
-for i in {1..42}
+for i in {1..43}
 do
    echo "$i" >> temp/go/build.txt
 done
@@ -23,8 +23,8 @@ cp Bench* ../../.
 
 ## Final clean-up
 cd ../..
-#sed -i '' '$d' main.go
 printf "package core\nconst Version=\"%s\"" "${UPSTREAM_VERSION}" > core/info.go
+printf "1234\n1234\n1234\n1234\n" > pins.txt
 rm -rf temp
 
 ## Run tests and remove files
