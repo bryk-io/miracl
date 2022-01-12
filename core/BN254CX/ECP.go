@@ -1752,57 +1752,75 @@ func ECP_map2point(h *FP) *ECP {
 			// Shallue and van de Woestijne
 			// SQRTm3 not available, so preprocess this out
 			/* */
-			                   Z:=RIADZ
-			                   X1.copy(NewFPint(Z))
-			                   X3.copy(X1)
-			                   A.copy(RHS(X1))
-			   				B.copy(NewFPbig(NewBIGints(SQRTm3)))
-			   				B.imul(Z)
+			Z := RIADZ
+			X1.copy(NewFPint(Z))
+			X3.copy(X1)
+			A.copy(RHS(X1))
+			B.copy(NewFPbig(NewBIGints(SQRTm3)))
+			B.imul(Z)
 
-			                   t.sqr()
-			                   Y.copy(A); Y.mul(t)
-			                   t.copy(one); t.add(Y); t.norm()
-			                   Y.rsub(one); Y.norm()
-			                   D.copy(t); D.mul(Y);
-			   				D.mul(B)
+			t.sqr()
+			Y.copy(A)
+			Y.mul(t)
+			t.copy(one)
+			t.add(Y)
+			t.norm()
+			Y.rsub(one)
+			Y.norm()
+			D.copy(t)
+			D.mul(Y)
+			D.mul(B)
 
-			                   w.copy(A);
-			   				FP_tpo(D,w)
+			w.copy(A)
+			FP_tpo(D, w)
 
-			                   w.mul(B)
-			                   if (w.sign()==1) {
-			                       w.neg()
-			                       w.norm()
-			                   }
+			w.mul(B)
+			if w.sign() == 1 {
+				w.neg()
+				w.norm()
+			}
 
-			                   w.mul(B)
-			                   w.mul(h); w.mul(Y); w.mul(D)
+			w.mul(B)
+			w.mul(h)
+			w.mul(Y)
+			w.mul(D)
 
-			                   X1.neg(); X1.norm(); X1.div2()
-			                   X2.copy(X1)
-			                   X1.sub(w); X1.norm()
-			                   X2.add(w); X2.norm()
-			                   A.add(A); A.add(A); A.norm()
-			                   t.sqr(); t.mul(D); t.sqr()
-			                   A.mul(t)
-			                   X3.add(A); X3.norm()
+			X1.neg()
+			X1.norm()
+			X1.div2()
+			X2.copy(X1)
+			X1.sub(w)
+			X1.norm()
+			X2.add(w)
+			X2.norm()
+			A.add(A)
+			A.add(A)
+			A.norm()
+			t.sqr()
+			t.mul(D)
+			t.sqr()
+			A.mul(t)
+			X3.add(A)
+			X3.norm()
 
-			                   rhs:=RHS(X2)
-			                   X3.cmove(X2,rhs.qr(nil))
-			                   rhs.copy(RHS(X1))
-			                   X3.cmove(X1,rhs.qr(nil))
-			                   rhs.copy(RHS(X3))
-			                   Y.copy(rhs.sqrt(nil))
+			rhs := RHS(X2)
+			X3.cmove(X2, rhs.qr(nil))
+			rhs.copy(RHS(X1))
+			X3.cmove(X1, rhs.qr(nil))
+			rhs.copy(RHS(X3))
+			Y.copy(rhs.sqrt(nil))
 
-			   				ne:=Y.sign()^sgn
-			   				w.copy(Y); w.neg(); w.norm()
-			   				Y.cmove(w,ne)
+			ne := Y.sign() ^ sgn
+			w.copy(Y)
+			w.neg()
+			w.norm()
+			Y.cmove(w, ne)
 
-			   				x:=X3.redc();
-			   				y:=Y.redc();
-			   				P.Copy(NewECPbigs(x,y))
-			   				return P
-			   /* */
+			x := X3.redc()
+			y := Y.redc()
+			P.Copy(NewECPbigs(x, y))
+			return P
+			/* */
 		}
 	}
 	return P

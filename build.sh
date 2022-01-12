@@ -14,7 +14,8 @@ echo "0" >> temp/go/build.txt
 cd temp/go || exit
 UPSTREAM_VERSION=$(git log --pretty=format:'%H' -n1)
 python3 config64.py < build.txt
-find . -type f -name '*.go' -exec sed -i '' "s|github.com/miracl/core/go|go.bryk.io/miracl|g" {} +
+find . -type f -name '*.go' -exec sed -i '' "s|miracl/core|go.bryk.io/miracl/core|g" {} +
+find . -type f -name '*.go' -exec sed -i '' "s|https://github.com/go.bryk.io/miracl/core|https://github.com/miracl/core|g" {} +
 cp -Rv ./core ../../.
 
 ## Copy test files
@@ -26,6 +27,8 @@ cd ../..
 printf "package core\nconst Version=\"%s\"" "${UPSTREAM_VERSION}" > core/info.go
 printf "1234\n1234\n1234\n1234\n" > pins.txt
 rm -rf temp
+gofmt -s -w .
+goimports -w .
 
 ## Run tests and remove files
 go run ./TestECC.go

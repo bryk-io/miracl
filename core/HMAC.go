@@ -537,7 +537,7 @@ func RSA_PKCS15b(sha int, m []byte, w []byte, RFS int) bool {
 	if olen < idlen+hlen+10 {
 		return false
 	}
-	H := SPhashit(MC_SHA2,sha,m)
+	H := SPhashit(MC_SHA2, sha, m)
 	//H := hashit(sha, m, -1)
 
 	for i := 0; i < len(w); i++ {
@@ -579,7 +579,6 @@ func RSA_PKCS15b(sha int, m []byte, w []byte, RFS int) bool {
 	}
 	return true
 }
-
 
 func RSA_PSS_ENCODE(sha int, m []byte, rng *RAND, RFS int) []byte {
 	emlen := RFS
@@ -808,7 +807,7 @@ func RSA_OAEP_DECODE(sha int, p []byte, f []byte, RFS int) []byte {
 		//	comp = false
 		//}
 	}
-	m:=olen-seedlen-hlen
+	m := olen - seedlen - hlen
 	for i := 0; i < m; i++ {
 		DBMASK[i] = DBMASK[i+hlen]
 	}
@@ -818,27 +817,27 @@ func RSA_OAEP_DECODE(sha int, p []byte, f []byte, RFS int) []byte {
 		CHASH[i] = 0
 	}
 
-	k:=0
-	t:=0
-	for i:=0;i<m; i++ {
-		if t==0 && DBMASK[i]!=0 {
-			k=i
-			t=int(DBMASK[i])
+	k := 0
+	t := 0
+	for i := 0; i < m; i++ {
+		if t == 0 && DBMASK[i] != 0 {
+			k = i
+			t = int(DBMASK[i])
 		}
 	}
-/*
-	var k int
-	for k = 0; ; k++ {
-		if k >= m {
-			return nil
+	/*
+		var k int
+		for k = 0; ; k++ {
+			if k >= m {
+				return nil
+			}
+			if DBMASK[k] != 0 {
+				break
+			}
 		}
-		if DBMASK[k] != 0 {
-			break
-		}
-	}
-	t := DBMASK[k] */
+		t := DBMASK[k] */
 
-	if comp!=0 || x != 0 || t != 0x01 {
+	if comp != 0 || x != 0 || t != 0x01 {
 		for i := 0; i < olen-seedlen; i++ {
 			DBMASK[i] = 0
 		}

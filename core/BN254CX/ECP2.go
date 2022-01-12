@@ -768,57 +768,75 @@ func ECP2_map2point(H *FP2) *ECP2 {
 	sgn := T.sign()    /**/
 	if HTC_ISO_G2 == 0 {
 		/* */
-				Z:=NewFPint(RIADZG2A);
-				X1:=NewFP2fp(Z)
-				X3:=NewFP2copy(X1)
-				A:=RHS2(X1)
-				W:=NewFP2copy(A)
-				if (RIADZG2A==-1 && RIADZG2B==0 && SEXTIC_TWIST==M_TYPE && CURVE_B_I==4) { // special case for BLS12381
-					W.copy(NewFP2ints(2,1))
-				} else {
-					W.sqrt(nil)
-				}
-				s:=NewFPbig(NewBIGints(SQRTm3))
-				Z.mul(s)
+		Z := NewFPint(RIADZG2A)
+		X1 := NewFP2fp(Z)
+		X3 := NewFP2copy(X1)
+		A := RHS2(X1)
+		W := NewFP2copy(A)
+		if RIADZG2A == -1 && RIADZG2B == 0 && SEXTIC_TWIST == M_TYPE && CURVE_B_I == 4 { // special case for BLS12381
+			W.copy(NewFP2ints(2, 1))
+		} else {
+			W.sqrt(nil)
+		}
+		s := NewFPbig(NewBIGints(SQRTm3))
+		Z.mul(s)
 
-				T.sqr()
-				Y:=NewFP2copy(A); Y.mul(T)
-				T.copy(NY); T.add(Y); T.norm()
-				Y.rsub(NY); Y.norm()
-				NY.copy(T); NY.mul(Y);
+		T.sqr()
+		Y := NewFP2copy(A)
+		Y.mul(T)
+		T.copy(NY)
+		T.add(Y)
+		T.norm()
+		Y.rsub(NY)
+		Y.norm()
+		NY.copy(T)
+		NY.mul(Y)
 
-				NY.pmul(Z)
-				NY.inverse(nil)
+		NY.pmul(Z)
+		NY.inverse(nil)
 
-				W.pmul(Z)
-				if (W.sign()==1) {
-					W.neg()
-					W.norm()
-				}
-				W.pmul(Z)
-				W.mul(H); W.mul(Y); W.mul(NY)
+		W.pmul(Z)
+		if W.sign() == 1 {
+			W.neg()
+			W.norm()
+		}
+		W.pmul(Z)
+		W.mul(H)
+		W.mul(Y)
+		W.mul(NY)
 
-				X1.neg(); X1.norm(); X1.div2()
-				X2:=NewFP2copy(X1)
-				X1.sub(W); X1.norm()
-				X2.add(W); X2.norm()
-				A.add(A); A.add(A); A.norm()
-				T.sqr(); T.mul(NY); T.sqr()
-				A.mul(T)
-				X3.add(A); X3.norm()
+		X1.neg()
+		X1.norm()
+		X1.div2()
+		X2 := NewFP2copy(X1)
+		X1.sub(W)
+		X1.norm()
+		X2.add(W)
+		X2.norm()
+		A.add(A)
+		A.add(A)
+		A.norm()
+		T.sqr()
+		T.mul(NY)
+		T.sqr()
+		A.mul(T)
+		X3.add(A)
+		X3.norm()
 
-				Y.copy(RHS2(X2))
-				X3.cmove(X2,Y.qr(nil))
-				Y.copy(RHS2(X1))
-				X3.cmove(X1,Y.qr(nil))
-				Y.copy(RHS2(X3))
-				Y.sqrt(nil)
+		Y.copy(RHS2(X2))
+		X3.cmove(X2, Y.qr(nil))
+		Y.copy(RHS2(X1))
+		X3.cmove(X1, Y.qr(nil))
+		Y.copy(RHS2(X3))
+		Y.sqrt(nil)
 
-				ne:=Y.sign()^sgn
-				W.copy(Y); W.neg(); W.norm()
-				Y.cmove(W,ne)
+		ne := Y.sign() ^ sgn
+		W.copy(Y)
+		W.neg()
+		W.norm()
+		Y.cmove(W, ne)
 
-				Q=NewECP2fp2s(X3,Y)
+		Q = NewECP2fp2s(X3, Y)
 		/* */
 	} else {
 

@@ -626,11 +626,11 @@ func glv(ee *BIG) []*BIG {
 	x := NewBIGints(CURVE_Bnx)
 	x2 := smul(x, x)
 	x = smul(x2, x2)
-	bd := uint(q.nbits()-x.nbits())
+	bd := uint(q.nbits() - x.nbits())
 	u = append(u, NewBIGcopy(ee))
-	u[0].ctmod(x,bd)
+	u[0].ctmod(x, bd)
 	u = append(u, NewBIGcopy(ee))
-	u[1].ctdiv(x,bd)
+	u[1].ctdiv(x, bd)
 	u[1].rsub(q)
 	return u
 }
@@ -641,12 +641,12 @@ func gs(ee *BIG) []*BIG {
 
 	q := NewBIGints(CURVE_Order)
 	x := NewBIGints(CURVE_Bnx)
-	bd := uint(q.nbits()-x.nbits())
+	bd := uint(q.nbits() - x.nbits())
 	w := NewBIGcopy(ee)
 	for i := 0; i < 7; i++ {
 		u = append(u, NewBIGcopy(w))
-		u[i].ctmod(x,bd)
-		w.ctdiv(x,bd)
+		u[i].ctmod(x, bd)
+		w.ctdiv(x, bd)
 	}
 	u = append(u, NewBIGcopy(w))
 	if SIGN_OF_X == NEGATIVEX {
@@ -664,7 +664,8 @@ func gs(ee *BIG) []*BIG {
 func G1mul(P *ECP, e *BIG) *ECP {
 	var R *ECP
 	q := NewBIGints(CURVE_Order)
-	ee:= NewBIGcopy(e); ee.Mod(q)
+	ee := NewBIGcopy(e)
+	ee.Mod(q)
 	if USE_GLV {
 		R = NewECP()
 		R.Copy(P)
@@ -697,7 +698,7 @@ func G1mul(P *ECP, e *BIG) *ECP {
 		R = R.Mul2(u[0], Q, u[1])
 
 	} else {
-		R = P.clmul(ee,q)
+		R = P.clmul(ee, q)
 	}
 	return R
 }
@@ -706,7 +707,8 @@ func G1mul(P *ECP, e *BIG) *ECP {
 func G2mul(P *ECP4, e *BIG) *ECP4 {
 	var R *ECP4
 	q := NewBIGints(CURVE_Order)
-	ee:= NewBIGcopy(e); ee.Mod(q)
+	ee := NewBIGcopy(e)
+	ee.Mod(q)
 	if USE_GS_G2 {
 		var Q []*ECP4
 
@@ -746,7 +748,8 @@ func G2mul(P *ECP4, e *BIG) *ECP4 {
 func GTpow(d *FP24, e *BIG) *FP24 {
 	var r *FP24
 	q := NewBIGints(CURVE_Order)
-	ee:= NewBIGcopy(e); ee.Mod(q)
+	ee := NewBIGcopy(e)
+	ee.Mod(q)
 	if USE_GS_GT {
 		var g []*FP24
 		f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
@@ -779,26 +782,72 @@ func GTpow(d *FP24, e *BIG) *FP24 {
 
 /* test G1 group membership */
 func G1member(P *ECP) bool {
-	q := NewBIGints(CURVE_Order)
+	if P.Is_infinity() {
+		return false
+	}
+	x := NewBIGints(CURVE_Bnx)
+	cru := NewFPbig(NewBIGints(CRu))
+	W := NewECP()
+	W.Copy(P)
+	W.getx().mul(cru)
+	T := P.mul(x)
+	if P.Equals(T) {
+		return false
+	} // P is of low order
+	T = T.mul(x)
+	T = T.mul(x)
+	T = T.mul(x)
+	T.Neg()
+	if !W.Equals(T) {
+		return false
+	}
+
+	// Not needed
+	//	W.Add(P);
+	//	T.getx().mul(cru)
+	//	W.Add(T)
+	//	if !W.Is_infinity() {return false}
+	/*q := NewBIGints(CURVE_Order)
 	if P.Is_infinity() {return false}
 	W:=P.mul(q)
-	if !W.Is_infinity() {return false}
+	if !W.Is_infinity() {return false} */
 	return true
 }
 
 /* test G2 group membership */
 func G2member(P *ECP4) bool {
-	q := NewBIGints(CURVE_Order)
-	if P.Is_infinity() {return false}
-	W:=P.mul(q)
-	if !W.Is_infinity() {return false}
+	F := ECP4_frob_constants()
+	x := NewBIGints(CURVE_Bnx)
+	W := NewECP4()
+	W.Copy(P)
+	W.frob(F, 1)
+	T := P.mul(x)
+	if SIGN_OF_X == NEGATIVEX {
+		T.neg()
+	}
+	/*
+	   	R:=NewECP4(); R.Copy(W)
+	       R.frob(F,1)
+	       W.Sub(R)
+	       R.Copy(T)
+	       R.frob(F,1)
+	       W.Add(R)
+	*/
+	if !W.Equals(T) {
+		return false
+	}
 	return true
+	/*
+		q := NewBIGints(CURVE_Order)
+		if P.Is_infinity() {return false}
+		W:=P.mul(q)
+		if !W.Is_infinity() {return false}
+		return true */
 }
 
-/* test group membership - no longer needed*/
+/* Check that m is in cyclotomic sub-group */
 /* Check that m!=1, conj(m)*m==1, and m.m^{p^8}=m^{p^4} */
-
-func GTmember(m *FP24) bool {
+func GTcyclotomic(m *FP24) bool {
 	if m.Isunity() {
 		return false
 	}
@@ -819,12 +868,34 @@ func GTmember(m *FP24) bool {
 	if !w.Equals(r) {
 		return false
 	}
+	return true
+}
 
-	q := NewBIGints(CURVE_Order)
-	w.Copy(m)
-	r.Copy(GTpow(w, q))
-	if !r.Isunity() {
+/* test for full GT membership */
+func GTmember(m *FP24) bool {
+	if !GTcyclotomic(m) {
+		return false
+	}
+	f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
+	x := NewBIGints(CURVE_Bnx)
+
+	r := NewFP24copy(m)
+	r.frob(f, 1)
+	t := m.Pow(x)
+
+	if SIGN_OF_X == NEGATIVEX {
+		t.conj()
+	}
+	if !r.Equals(t) {
 		return false
 	}
 	return true
+
+	/*
+		q := NewBIGints(CURVE_Order)
+		r := m.Pow(q)
+		if !r.Isunity() {
+			return false
+		}
+		return true */
 }
