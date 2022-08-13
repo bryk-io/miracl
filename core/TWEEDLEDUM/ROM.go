@@ -29,7 +29,7 @@ var SQRTm3 = [...]Chunk{0xF0D7AB7DE6C70, 0xAAE034F7256C96, 0xD7220F84CB1286, 0x9
 
 const MConst Chunk = 0x4064E1FFFFFFFF
 
-//*** rom curve parameters *****
+// *** rom curve parameters *****
 const CURVE_Cof_I int = 1
 
 var CURVE_Cof = [...]Chunk{0x1, 0x0, 0x0, 0x0, 0x0}

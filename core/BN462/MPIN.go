@@ -23,7 +23,7 @@ package BN462
 
 import "go.bryk.io/miracl/core"
 
-//import "fmt"
+// import "fmt"
 const MFS int = int(MODBYTES)
 const MGS int = int(MODBYTES)
 const BAD_PARAMS int = -11

@@ -27,7 +27,7 @@ import "go.bryk.io/miracl/core"
 const INVALID_PUBLIC_KEY int = -2
 const ERROR int = -3
 
-//const INVALID int = -4
+// const INVALID int = -4
 const EFS int = int(MODBYTES)
 const EGS int = int(MODBYTES)
 

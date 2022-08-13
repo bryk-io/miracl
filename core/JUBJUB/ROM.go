@@ -21,7 +21,7 @@
 
 package JUBJUB
 
-//*** rom field parameters*****
+// *** rom field parameters*****
 // Base Bits= 56
 var Modulus = [...]Chunk{0xFFFFFF00000001, 0xA402FFFE5BFEFF, 0x809A1D80553BD, 0x299D7D483339D8, 0x73EDA753}
 var R2modp = [...]Chunk{0x3B3440EC31BBA9, 0x8929657E045FB0, 0x2D645CF57C6E1A, 0xEA6A1C5012ECF5, 0x3C7B9D12}

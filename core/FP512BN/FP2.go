@@ -334,22 +334,22 @@ func (F *FP2) mul(y *FP2) {
 }
 
 /*
-func (F *FP2) pow(b *BIG)  {
-	w := NewFP2copy(F);
-	r := NewFP2int(1)
-	z := NewBIGcopy(b)
-	for true {
-		bt := z.parity()
-		z.shr(1)
-		if bt==1 {
-			r.mul(w)
+	func (F *FP2) pow(b *BIG)  {
+		w := NewFP2copy(F);
+		r := NewFP2int(1)
+		z := NewBIGcopy(b)
+		for true {
+			bt := z.parity()
+			z.shr(1)
+			if bt==1 {
+				r.mul(w)
+			}
+			if z.iszilch() {break}
+			w.sqr()
 		}
-		if z.iszilch() {break}
-		w.sqr()
+		r.reduce()
+		F.copy(r)
 	}
-	r.reduce()
-	F.copy(r)
-}
 */
 func (F *FP2) qr(h *FP) int {
 	c := NewFP2copy(F)

@@ -838,11 +838,12 @@ func G2member(P *ECP4) bool {
 	}
 	return true
 	/*
-		q := NewBIGints(CURVE_Order)
-		if P.Is_infinity() {return false}
-		W:=P.mul(q)
-		if !W.Is_infinity() {return false}
-		return true */
+	   q := NewBIGints(CURVE_Order)
+	   if P.Is_infinity() {return false}
+	   W:=P.mul(q)
+	   if !W.Is_infinity() {return false}
+	   return true
+	*/
 }
 
 /* Check that m is in cyclotomic sub-group */
@@ -892,10 +893,13 @@ func GTmember(m *FP24) bool {
 	return true
 
 	/*
-		q := NewBIGints(CURVE_Order)
-		r := m.Pow(q)
-		if !r.Isunity() {
-			return false
-		}
-		return true */
+	   q := NewBIGints(CURVE_Order)
+	   r := m.Pow(q)
+
+	   	if !r.Isunity() {
+	   		return false
+	   	}
+
+	   return true
+	*/
 }

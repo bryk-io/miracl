@@ -21,7 +21,7 @@
 
 package C13318
 
-//*** rom field parameters*****
+// *** rom field parameters*****
 // Base Bits= 56
 var Modulus = [...]Chunk{0xFFFFFFFFFFFFED, 0xFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFF, 0x7FFFFFFF}
 var R2modp = [...]Chunk{0xA4000000000000, 0x5, 0x0, 0x0, 0x0}

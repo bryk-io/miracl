@@ -5,8 +5,8 @@ help:
 	@echo "Commands available"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /' | sort
 
-## build: Build the AMCL library from the latest commit on the fork repo
-build:
+## update: Update the AMCL library from the latest commit on the fork repo
+update:
 	@./build.sh
 
 ## test: Run all tests available on the AMCL library
