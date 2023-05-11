@@ -110,7 +110,7 @@ func mod(d *DBIG) *BIG {
 		t := d.split(MODBITS)
 		b := NewBIGdcopy(d)
 
-		v := t.pmul(int(MConst))
+		v := t.pmul(int64(MConst))
 
 		t.add(b)
 		t.norm()
@@ -197,7 +197,7 @@ func (F *FP) reduce() {
 
 	if F.XES > 16 {
 		q := quo(F.x, m)
-		carry := r.pmul(q)
+		carry := r.pmul(int64(q))
 		r.w[NLEN-1] += carry << BASEBITS
 		F.x.sub(r)
 		F.x.norm()
@@ -348,7 +348,7 @@ func (F *FP) imul(c int) {
 		F.XES = 2
 	} else {
 		if F.XES*int32(c) <= FEXCESS {
-			F.x.pmul(c)
+			F.x.pmul(int64(c))
 			F.XES *= int32(c)
 		} else {
 			n := NewFPint(c)
@@ -494,7 +494,7 @@ func (F *FP) fpow() *FP {
 	}
 
 	n -= (e + 1)
-	c = (int(MConst) + (1 << e) + 1) / (1 << (e + 1))
+	c = int((int64(MConst) + (1 << e) + 1) / (1 << (e + 1)))
 
 	nd := 0
 	for c%2 == 0 {
