@@ -35,6 +35,7 @@ go run ./TestECC.go
 go run ./TestBLS.go
 go run ./TestHPKE.go
 go run ./TestNHS.go
+go run ./TestEDDSA.go
 go run ./TestMPIN.go < pins.txt
 rm Test* pins.txt
 

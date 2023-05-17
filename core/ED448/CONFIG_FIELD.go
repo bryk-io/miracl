@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package GOLDILOCKS
+package ED448
 
 // Modulus types
 const NOT_SPECIAL int = 0

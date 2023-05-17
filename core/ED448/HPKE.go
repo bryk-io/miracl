@@ -21,7 +21,7 @@
 
 /* Following https://datatracker.ietf.org/doc/draft-irtf-cfrg-hpke/?include_text=1 */
 
-package GOLDILOCKS
+package ED448
 
 //import "fmt"
 import "go.bryk.io/miracl/core"

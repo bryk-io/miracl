@@ -19,7 +19,7 @@
 
 /* MiotCL double length DBIG number class */
 
-package GOLDILOCKS
+package ED448
 
 import "strconv"
 

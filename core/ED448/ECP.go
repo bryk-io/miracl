@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package GOLDILOCKS
+package ED448
 
 //import "fmt"
 /* Elliptic Curve Point Structure */

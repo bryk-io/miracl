@@ -19,7 +19,7 @@
 
 /* core BIG number class */
 
-package GOLDILOCKS
+package ED448
 
 type Chunk int64
 

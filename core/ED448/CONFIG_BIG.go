@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package GOLDILOCKS
+package ED448
 
 // BIG length in bytes and number base
 const MODBYTES uint = 56

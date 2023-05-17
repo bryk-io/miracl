@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package GOLDILOCKS
+package ED448
 
 // Curve types
 const WEIERSTRASS int = 0
