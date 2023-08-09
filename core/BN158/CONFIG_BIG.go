@@ -17,16 +17,18 @@
  * limitations under the License.
  */
 
-package RSA4096
+package BN158
 
-// Modulus as number of BIGs
-const FFLEN int = 8
+// BIG length in bytes and number base
+const MODBYTES uint = 20
+const BASEBITS uint = 56
 
-// Modulus length in bits
-const FF_BITS int = (BIGBITS * FFLEN) /* Finite Field Size in bits - must be 256.2^n */
-const HFLEN int = (FFLEN / 2)         /* Useful for half-size RSA private key operations */
+// BIG lengths and Masks
+const NLEN int = int((1 + ((8*MODBYTES - 1) / BASEBITS)))
+const DNLEN int = 2 * NLEN
+const BMASK Chunk = ((Chunk(1) << BASEBITS) - 1)
+const HBITS uint = (BASEBITS / 2)
+const HMASK Chunk = ((Chunk(1) << HBITS) - 1)
+const NEXCESS int = (1 << (uint(CHUNK) - BASEBITS - 1))
 
-const P_MBITS uint = MODBYTES * 8
-const P_OMASK Chunk = (Chunk(-1) << (P_MBITS % BASEBITS))
-const P_FEXCESS Chunk = (Chunk(1) << (BASEBITS*uint(NLEN) - P_MBITS - 1))
-const P_TBITS uint = (P_MBITS % BASEBITS)
+const BIGBITS int = int(MODBYTES * 8)

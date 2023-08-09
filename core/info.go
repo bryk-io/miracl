@@ -1,3 +1,3 @@
 package core
 
-const Version = "c39a2eb1e328fbea635038b424830f676f07e5a0"
+const Version = "ec77b2817a0e360b1893affe4cfa44d19391efc7"

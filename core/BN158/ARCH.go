@@ -17,18 +17,10 @@
  * limitations under the License.
  */
 
-package RSA4096
+/* core BIG number class */
 
-// BIG length in bytes and number base
-const MODBYTES uint = 64
-const BASEBITS uint = 60
+package BN158
 
-// BIG lengths and Masks
-const NLEN int = int((1 + ((8*MODBYTES - 1) / BASEBITS)))
-const DNLEN int = 2 * NLEN
-const BMASK Chunk = ((Chunk(1) << BASEBITS) - 1)
-const HBITS uint = (BASEBITS / 2)
-const HMASK Chunk = ((Chunk(1) << HBITS) - 1)
-const NEXCESS int = (1 << (uint(CHUNK) - BASEBITS - 1))
+type Chunk int64
 
-const BIGBITS int = int(MODBYTES * 8)
+const CHUNK int = 64 /* Set word size */

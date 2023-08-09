@@ -19,7 +19,7 @@
 
 /* core BIG number class */
 
-package RSA4096
+package BN158
 
 import (
 	"math/bits"
