@@ -1,3 +1,3 @@
 module go.bryk.io/miracl
 
-go 1.14
+go 1.18
