@@ -379,6 +379,10 @@ func VERIFY(ph bool, Q []byte, ctx []byte, M []byte, SIG []byte) bool {
 		c /= 2
 	}
 	q := NewBIGints(CURVE_Order)
+	if len(SIG) != 2*b {
+		return false
+	}
+
 	R := decode(SIG)
 	if R.Is_infinity() {
 		return false
